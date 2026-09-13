@@ -318,8 +318,32 @@
       <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
       <p class="top-sub" id="topSub">Tú decides cuánto ahorras cada mes y cómo lo repartes.</p>
     </div>
-    <div class="theme-note"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">cargando…</span></div>
+    <div style="text-align:right">
+      <div class="theme-note"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">cargando…</span></div>
+      <div id="accountBar" style="margin-top:6px;font-size:0.75rem;color:var(--ink-mute);display:flex;gap:8px;align-items:center;justify-content:flex-end" hidden>
+        <span id="accountEmail"></span>
+        <button type="button" id="signOutBtn" class="ghost-btn" style="padding:2px 8px;font-size:0.7rem">Cerrar sesión</button>
+      </div>
+    </div>
   </header>
+
+  <div id="authGate" class="card" style="max-width:380px;margin:60px auto 0" hidden>
+    <div class="card-head">
+      <h2>Inicia sesión</h2>
+    </div>
+    <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Tus datos del Libro de Ahorro se guardan en tu cuenta, no solo en este navegador.</p>
+    <form id="authForm" style="display:flex;flex-direction:column;gap:10px">
+      <input type="email" id="authEmail" placeholder="Correo electrónico" autocomplete="email" required style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
+      <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password" required minlength="6" style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
+      <div style="display:flex;gap:8px">
+        <button type="submit" id="authLoginBtn" style="flex:1;font-family:inherit;font-size:0.85rem;font-weight:600;padding:9px 14px;border:none;border-radius:9px;background:var(--accent);color:var(--accent-ink);cursor:pointer">Iniciar sesión</button>
+        <button type="button" id="authSignupBtn" class="ghost-btn" style="flex:1">Crear cuenta</button>
+      </div>
+      <div id="authMsg" class="limit-msg" hidden></div>
+    </form>
+  </div>
+
+  <div id="appRoot" hidden>
 
   <div class="month-bar">
     <button class="month-btn" id="prevMonth" aria-label="Mes anterior">‹</button>
@@ -442,7 +466,7 @@
   </div>
 
   <footer class="foot">
-    <p class="foot-note">Tus datos se guardan de forma privada en este navegador. Usa «Exportar copia» para descargar una copia de seguridad en cualquier momento (o para pasarlos a otro dispositivo con «Importar copia»).</p>
+    <p class="foot-note">Tus datos se guardan en tu cuenta. Usa «Exportar copia» para descargar una copia de seguridad en cualquier momento (o para pasarlos a otro dispositivo con «Importar copia»).</p>
     <div class="foot-actions">
       <button class="ghost-btn" id="exportBtn">Exportar copia</button>
       <button class="ghost-btn" id="importBtn">Importar copia</button>
@@ -450,10 +474,13 @@
     </div>
   </footer>
 
+  </div>
+
 </div>
 
 <div class="tip" id="tip"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -500,16 +527,28 @@
     return data;
   }
 
-  // ---------- storage: plain localStorage, synchronous ----------
-  // (Se simplificó a propósito: la versión anterior usaba un almacén remoto
-  // asíncrono que a veces sobrescribía lo que acababas de escribir con datos
-  // viejos, dando la sensación de que "no se podía editar nada". Guardar en
-  // localStorage es inmediato y no tiene ese problema de carrera.)
-  function loadState(){
+  // ---------- storage: Supabase (per-account), with a localStorage cache ----------
+  var SUPABASE_URL = "https://nhhskvauwdudhojjvodi.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_0EouCOgtpq146qgFsMusDg_bvQh58MI";
+  var SUPABASE_TABLE = "libro_ahorro";
+
+  var sb = null;
+  try {
+    if (window.supabase && window.supabase.createClient) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+  } catch (e) { sb = null; }
+
+  var currentUser = null;
+
+  function loadLocalState(){
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       return raw ? mergeDefaults(JSON.parse(raw)) : defaultState();
     } catch(e){ return defaultState(); }
+  }
+  function saveLocalState(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
   }
   function setSyncStatus(on, label){
     var dot = document.getElementById("syncDot");
@@ -517,16 +556,36 @@
     if (dot) dot.className = "sync-dot" + (on ? " on" : "");
     if (lbl) lbl.textContent = label;
   }
+
+  // Guarda en Supabase (si hay sesión) y siempre deja una copia local de respaldo.
   function saveState(){
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      setSyncStatus(true, "guardado en este navegador");
-    } catch(e){
-      setSyncStatus(false, "no se pudo guardar (¿modo privado?)");
+    saveLocalState();
+    if (sb && currentUser){
+      sb.from(SUPABASE_TABLE)
+        .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() })
+        .then(function(res){
+          if (res.error) { setSyncStatus(false, "sin conexión, guardado local"); }
+          else { setSyncStatus(true, "guardado en tu cuenta"); }
+        });
     }
   }
 
-  var state = loadState();
+  async function loadStateForUser(user){
+    if (!sb) return loadLocalState();
+    try {
+      var res = await sb.from(SUPABASE_TABLE).select("data").eq("user_id", user.id).maybeSingle();
+      if (res.error) throw res.error;
+      if (res.data && res.data.data) return mergeDefaults(res.data.data);
+      var fresh = defaultState();
+      await sb.from(SUPABASE_TABLE).insert({ user_id: user.id, data: fresh });
+      return fresh;
+    } catch (e) {
+      setSyncStatus(false, "sin conexión, guardado local");
+      return loadLocalState();
+    }
+  }
+
+  var state = defaultState();
   var currentMonth = todayMonthKey();
   var breakdownScope = "month";
 
@@ -969,10 +1028,75 @@
     e.target.value = "";
   });
 
-  // Arranque inmediato y síncrono: sin esperas de red, sin datos remotos
-  // que puedan pisar lo que acabas de escribir.
-  setSyncStatus(true, "guardado en este navegador");
-  render();
+  // ---------- autenticación ----------
+  function showAuthGate(){
+    document.getElementById("authGate").hidden = false;
+    document.getElementById("appRoot").hidden = true;
+    document.getElementById("accountBar").hidden = true;
+  }
+  async function showApp(user){
+    document.getElementById("authGate").hidden = true;
+    document.getElementById("appRoot").hidden = false;
+    document.getElementById("accountBar").hidden = false;
+    document.getElementById("accountEmail").textContent = user.email || "";
+    setSyncStatus(true, "cargando tus datos…");
+    state = await loadStateForUser(user);
+    saveLocalState();
+    setSyncStatus(true, "guardado en tu cuenta");
+    render();
+  }
+  function authMsg(text){
+    var el = document.getElementById("authMsg");
+    el.textContent = text;
+    el.hidden = false;
+  }
+
+  if (!sb) {
+    // No se pudo cargar el cliente de Supabase (sin red, CDN bloqueado, etc.):
+    // seguimos funcionando solo con este navegador para no dejar la app inservible.
+    state = loadLocalState();
+    document.getElementById("authGate").hidden = true;
+    document.getElementById("appRoot").hidden = false;
+    setSyncStatus(false, "sin conexión con la cuenta, guardado local");
+    render();
+  } else {
+    document.getElementById("authForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      document.getElementById("authMsg").hidden = true;
+      var email = document.getElementById("authEmail").value.trim();
+      var password = document.getElementById("authPassword").value;
+      var res = await sb.auth.signInWithPassword({ email: email, password: password });
+      if (res.error) authMsg(res.error.message || "No se pudo iniciar sesión.");
+    });
+    document.getElementById("authSignupBtn").addEventListener("click", async function(){
+      document.getElementById("authMsg").hidden = true;
+      var email = document.getElementById("authEmail").value.trim();
+      var password = document.getElementById("authPassword").value;
+      if (!email || password.length < 6){
+        authMsg("Escribe un correo y una contraseña de al menos 6 caracteres.");
+        return;
+      }
+      var res = await sb.auth.signUp({ email: email, password: password });
+      if (res.error) authMsg(res.error.message || "No se pudo crear la cuenta.");
+      else if (!res.data.session) authMsg("Cuenta creada. Ya puedes iniciar sesión.");
+    });
+    document.getElementById("signOutBtn").addEventListener("click", async function(){
+      await sb.auth.signOut();
+    });
+
+    sb.auth.onAuthStateChange(function(event, session){
+      if (session && session.user) {
+        currentUser = session.user;
+        showApp(session.user);
+      } else {
+        currentUser = null;
+        showAuthGate();
+      }
+    });
+    sb.auth.getSession().then(function(res){
+      if (!res.data || !res.data.session) showAuthGate();
+    });
+  }
 })();
 </script>
 </body>
