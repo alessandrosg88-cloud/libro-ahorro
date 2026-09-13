@@ -1,11 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root{color-scheme:light}body{margin:0;padding:0}img{max-width:100%}</style>
 <title>Libro de Ahorro</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -135,7 +136,9 @@
   .brand h1 { font-size: 1.5rem; letter-spacing: -0.01em; }
   .brand .mark { font-size: 1.5rem; }
   .top-sub { color: var(--ink-mute); font-size: 0.85rem; margin: 4px 0 0; }
-  .theme-note { font-size: 0.75rem; color: var(--ink-mute); text-align: right; max-width: 220px; line-height: 1.4; }
+  .theme-note { font-size: 0.75rem; color: var(--ink-mute); text-align: right; max-width: 240px; line-height: 1.4; }
+  .sync-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; background: var(--ink-mute); }
+  .sync-dot.on { background: var(--good); }
 
   /* ---- month switcher ---- */
   .month-bar {
@@ -177,7 +180,7 @@
   .total-edit .eur { font-family: "Fraunces", serif; font-size: 2rem; font-weight: 600; }
   .total-sub { color: var(--ink-mute); font-size: 0.82rem; }
 
-  .split-visual { display: flex; height: 30px; border-radius: 8px; overflow: hidden; gap: 2px; margin-bottom: 14px; }
+  .split-visual { display: flex; height: 30px; border-radius: 8px; overflow: hidden; gap: 2px; margin-bottom: 14px; background: var(--surface-2); }
   .split-seg { display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 600; color: white; transition: flex-basis .18s ease; white-space: nowrap; overflow: hidden; }
   .split-seg.invest { background: var(--accent); }
   .split-seg.emerg { background: var(--emerg); }
@@ -246,6 +249,7 @@
   .entry-del { background: none; border: none; color: var(--ink-mute); cursor: pointer; font-size: 0.95rem; padding: 2px 4px; line-height: 1; }
   .entry-del:hover { color: var(--crit); }
   .empty-note { color: var(--ink-mute); font-size: 0.83rem; font-style: italic; padding: 4px 0; }
+  .limit-msg { font-size: 0.8rem; color: var(--crit); background: var(--emerg-soft); border: 1px solid var(--emerg-soft); border-radius: 9px; padding: 8px 11px; line-height: 1.4; }
 
   /* category breakdown bar */
   .breakdown-toggle { display: flex; gap: 6px; font-size: 0.75rem; }
@@ -306,16 +310,15 @@
     * { transition: none !important; }
   }
 </style>
-</head>
-<body>
+
 <div class="sheet">
 
   <header class="top">
     <div>
       <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
-      <p class="top-sub">500 € al mes, divididos entre inversión y colchón de emergencia.</p>
+      <p class="top-sub" id="topSub">Tú decides cuánto ahorras cada mes y cómo lo repartes.</p>
     </div>
-    <div class="theme-note">Los datos se guardan solo en este navegador. Usa «Exportar» para hacer una copia.</div>
+    <div class="theme-note"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">cargando…</span></div>
   </header>
 
   <div class="month-bar">
@@ -328,11 +331,11 @@
   <section class="hero">
     <div class="hero-top">
       <div>
-        <div class="hero-title">Ahorro mensual</div>
+        <div class="hero-title">Objetivo de ahorro mensual</div>
         <div class="total-edit">
-          <span class="eur">€</span><input type="number" id="totalInput" min="0" step="10">
+          <span class="eur">€</span><input type="number" id="totalInput" min="0" step="10" value="0">
         </div>
-        <div class="total-sub">Ajusta el reparto abajo</div>
+        <div class="total-sub">Escribe cuánto quieres ahorrar este mes y ajusta el reparto abajo</div>
       </div>
     </div>
 
@@ -340,13 +343,13 @@
 
     <div class="split-slider-row">
       <span style="font-size:0.78rem;color:var(--ink-mute)">0</span>
-      <input type="range" id="splitSlider" min="0" max="500" step="5">
-      <span style="font-size:0.78rem;color:var(--ink-mute)" id="sliderMax">500</span>
+      <input type="range" id="splitSlider" min="0" max="0" step="5" value="0">
+      <span style="font-size:0.78rem;color:var(--ink-mute)" id="sliderMax">0</span>
     </div>
 
     <div class="split-legend">
-      <span class="lg"><span class="dot invest"></span>Inversión <b class="num" id="investAmtLabel">300 €</b></span>
-      <span class="lg"><span class="dot emerg"></span>Emergencia <b class="num" id="emergAmtLabel">200 €</b></span>
+      <span class="lg"><span class="dot invest"></span>Inversión <b class="num" id="investAmtLabel">0 €</b></span>
+      <span class="lg"><span class="dot emerg"></span>Emergencia <b class="num" id="emergAmtLabel">0 €</b></span>
     </div>
   </section>
 
@@ -356,12 +359,12 @@
     <div class="card">
       <div class="card-head">
         <h2><span class="swatch" style="background:var(--accent)"></span>Inversión</h2>
-        <span class="card-target num" id="investTargetLabel">objetivo 300 €</span>
+        <span class="card-target num" id="investTargetLabel">objetivo 0 €</span>
       </div>
 
       <div class="progress-wrap">
         <div class="progress-track"><div class="progress-fill invest" id="investProgressFill"></div></div>
-        <div class="progress-nums"><b class="num" id="investProgressText">0 € / 300 €</b><span id="investProgressPct">0%</span></div>
+        <div class="progress-nums"><b class="num" id="investProgressText">0 € / 0 €</b><span id="investProgressPct">0%</span></div>
       </div>
 
       <form class="add-row" id="investForm">
@@ -374,6 +377,7 @@
         <input type="text" id="newCatInput" placeholder="nombre de la categoría">
         <button type="button" class="ghost-btn" id="newCatConfirm">crear</button>
       </div>
+      <div id="investLimitMsg" class="limit-msg" hidden></div>
 
       <div class="entries-list" id="investEntries"></div>
 
@@ -391,12 +395,12 @@
     <div class="card">
       <div class="card-head">
         <h2><span class="swatch" style="background:var(--emerg)"></span>Emergencia</h2>
-        <span class="card-target num" id="emergTargetLabel">objetivo 200 €</span>
+        <span class="card-target num" id="emergTargetLabel">objetivo 0 €</span>
       </div>
 
       <div class="progress-wrap">
         <div class="progress-track"><div class="progress-fill emerg" id="emergProgressFill"></div></div>
-        <div class="progress-nums"><b class="num" id="emergProgressText">0 € / 200 €</b><span id="emergProgressPct">0%</span></div>
+        <div class="progress-nums"><b class="num" id="emergProgressText">0 € / 0 €</b><span id="emergProgressPct">0%</span></div>
       </div>
 
       <div class="fund-total">
@@ -409,6 +413,7 @@
         <input type="text" id="emergNote" placeholder="nota (opcional)">
         <button type="submit">Añadir</button>
       </form>
+      <div id="emergLimitMsg" class="limit-msg" hidden></div>
 
       <div class="entries-list" id="emergEntries"></div>
     </div>
@@ -417,7 +422,7 @@
     <div class="card wide">
       <div class="card-head">
         <h2>Historial mensual</h2>
-        <span class="card-target">objetivo total 500 €/mes</span>
+        <span class="card-target" id="historyTargetLabel">objetivo total 0 €/mes</span>
       </div>
 
       <div class="chart-wrap">
@@ -437,7 +442,7 @@
   </div>
 
   <footer class="foot">
-    <p class="foot-note">Copia de seguridad: exporta tus datos como archivo, o impórtalos en otro navegador u ordenador.</p>
+    <p class="foot-note">Tus datos se guardan de forma privada en este navegador. Usa «Exportar copia» para descargar una copia de seguridad en cualquier momento (o para pasarlos a otro dispositivo con «Importar copia»).</p>
     <div class="foot-actions">
       <button class="ghost-btn" id="exportBtn">Exportar copia</button>
       <button class="ghost-btn" id="importBtn">Importar copia</button>
@@ -477,32 +482,48 @@
   }
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 
+  // Empieza siempre a cero: nada de objetivos ni reparto predefinidos.
+  // El usuario decide cuánto quiere ahorrar y cómo repartirlo desde cero.
   function defaultState(){
     return {
-      totalMensual: 500,
-      investObjetivo: 300,
+      totalMensual: 0,
+      investObjetivo: 0,
       categorias: ["Bitcoin","ETF","Acciones"],
       entries: [],       // {id, mes, categoria, cantidad, nota, fecha}
       emergEntries: []   // {id, mes, cantidad, nota, fecha}
     };
   }
+  function mergeDefaults(data){
+    var def = defaultState();
+    data = data || {};
+    for (var k in def) if (!(k in data)) data[k] = def[k];
+    return data;
+  }
 
+  // ---------- storage: plain localStorage, synchronous ----------
+  // (Se simplificó a propósito: la versión anterior usaba un almacén remoto
+  // asíncrono que a veces sobrescribía lo que acababas de escribir con datos
+  // viejos, dando la sensación de que "no se podía editar nada". Guardar en
+  // localStorage es inmediato y no tiene ese problema de carrera.)
   function loadState(){
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return defaultState();
-      var parsed = JSON.parse(raw);
-      var def = defaultState();
-      for (var k in def) if (!(k in parsed)) parsed[k] = def[k];
-      return parsed;
-    } catch(e){
-      console.warn("No se pudo leer el almacenamiento local, empezando de cero.", e);
-      return defaultState();
-    }
+      return raw ? mergeDefaults(JSON.parse(raw)) : defaultState();
+    } catch(e){ return defaultState(); }
+  }
+  function setSyncStatus(on, label){
+    var dot = document.getElementById("syncDot");
+    var lbl = document.getElementById("syncLabel");
+    if (dot) dot.className = "sync-dot" + (on ? " on" : "");
+    if (lbl) lbl.textContent = label;
   }
   function saveState(){
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch(e){ console.warn("No se pudo guardar en el almacenamiento local.", e); }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setSyncStatus(true, "guardado en este navegador");
+    } catch(e){
+      setSyncStatus(false, "no se pudo guardar (¿modo privado?)");
+    }
   }
 
   var state = loadState();
@@ -564,14 +585,19 @@
     document.getElementById("emergAmtLabel").textContent = fmtEur(emerg);
 
     var investPct = state.totalMensual > 0 ? (invest/state.totalMensual*100) : 0;
-    var emergPct = 100 - investPct;
+    var emergPct = state.totalMensual > 0 ? (100 - investPct) : 0;
     var visual = document.getElementById("splitVisual");
-    visual.innerHTML =
-      '<div class="split-seg invest" style="flex-basis:'+investPct+'%">'+(investPct>14?fmtEur(invest):'')+'</div>' +
-      '<div class="split-seg emerg" style="flex-basis:'+emergPct+'%">'+(emergPct>14?fmtEur(emerg):'')+'</div>';
+    if (state.totalMensual <= 0){
+      visual.innerHTML = '';
+    } else {
+      visual.innerHTML =
+        '<div class="split-seg invest" style="flex-basis:'+investPct+'%">'+(investPct>14?fmtEur(invest):'')+'</div>' +
+        '<div class="split-seg emerg" style="flex-basis:'+emergPct+'%">'+(emergPct>14?fmtEur(emerg):'')+'</div>';
+    }
 
     document.getElementById("investTargetLabel").textContent = "objetivo " + fmtEur(invest);
     document.getElementById("emergTargetLabel").textContent = "objetivo " + fmtEur(emerg);
+    document.getElementById("historyTargetLabel").textContent = "objetivo total " + fmtEur(state.totalMensual) + "/mes";
   }
 
   function currentInvestObjetivo(){ return clamp(state.investObjetivo, 0, state.totalMensual); }
@@ -690,7 +716,7 @@
     var body = document.getElementById("historyBody");
     body.innerHTML = months.slice().reverse().map(function(m){
       var inv = investTotalMonth(m), em = emergTotalMonth(m), tot = inv+em;
-      var ok = tot >= target;
+      var ok = target > 0 ? (tot >= target) : (tot > 0);
       return '<tr>' +
         '<td style="text-transform:capitalize">'+monthKeyToLabel(m)+'</td>' +
         '<td class="num">'+fmtEur(inv)+'</td>' +
@@ -708,11 +734,11 @@
     var W = 800, H = 220, padL = 40, padR = 16, padT = 14, padB = 30;
     var plotW = W - padL - padR, plotH = H - padT - padB;
 
-    var maxVal = target;
+    var maxVal = Math.max(target, 1);
     months.forEach(function(m){ maxVal = Math.max(maxVal, investTotalMonth(m)+emergTotalMonth(m)); });
     maxVal = maxVal * 1.15;
 
-    var n = months.length;
+    var n = Math.max(months.length, 1);
     var slot = plotW / n;
     var barW = Math.min(34, slot * 0.5);
 
@@ -730,9 +756,11 @@
     }
 
     // target line
-    var ty = yScale(target);
-    parts.push('<line class="target-line" x1="'+padL+'" x2="'+(W-padR)+'" y1="'+ty+'" y2="'+ty+'"/>');
-    parts.push('<text x="'+(W-padR)+'" y="'+(ty-4)+'" text-anchor="end" style="fill:var(--ink-mute)">objetivo</text>');
+    if (target > 0){
+      var ty = yScale(target);
+      parts.push('<line class="target-line" x1="'+padL+'" x2="'+(W-padR)+'" y1="'+ty+'" y2="'+ty+'"/>');
+      parts.push('<text x="'+(W-padR)+'" y="'+(ty-4)+'" text-anchor="end" style="fill:var(--ink-mute)">objetivo</text>');
+    }
 
     months.forEach(function(m, i){
       var cx = padL + slot*i + slot/2;
@@ -778,6 +806,16 @@
     return String(s).replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
     });
+  }
+
+  function showLimitMsg(id, text){
+    var el = document.getElementById(id);
+    el.textContent = text;
+    el.hidden = false;
+  }
+  function hideLimitMsg(id){
+    var el = document.getElementById(id);
+    el.hidden = true;
   }
 
   // ---------- events ----------
@@ -834,6 +872,16 @@
     var amtInput = document.getElementById("investAmt");
     var amt = parseFloat(amtInput.value);
     if (isNaN(amt) || amt <= 0) return;
+
+    var target = currentInvestObjetivo();
+    var used = investTotalMonth(currentMonth);
+    var remaining = Math.max(0, target - used);
+    if (amt > remaining){
+      showLimitMsg("investLimitMsg", "Eso supera tu objetivo de inversión (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
+      return;
+    }
+    hideLimitMsg("investLimitMsg");
+
     var note = document.getElementById("investNote").value.trim();
     state.entries.push({ id: uid(), mes: currentMonth, categoria: cat, cantidad: amt, nota: note, fecha: new Date().toISOString() });
     saveState();
@@ -846,6 +894,16 @@
     var amtInput = document.getElementById("emergAmt");
     var amt = parseFloat(amtInput.value);
     if (isNaN(amt) || amt <= 0) return;
+
+    var target = currentEmergObjetivo();
+    var used = emergTotalMonth(currentMonth);
+    var remaining = Math.max(0, target - used);
+    if (amt > remaining){
+      showLimitMsg("emergLimitMsg", "Eso supera tu objetivo de emergencia (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
+      return;
+    }
+    hideLimitMsg("emergLimitMsg");
+
     var note = document.getElementById("emergNote").value.trim();
     state.emergEntries.push({ id: uid(), mes: currentMonth, cantidad: amt, nota: note, fecha: new Date().toISOString() });
     saveState();
@@ -876,12 +934,18 @@
   });
 
   document.getElementById("exportBtn").addEventListener("click", function(){
-    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url; a.download = "libro-ahorro-" + todayMonthKey() + ".json";
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    var json = JSON.stringify(state, null, 2);
+    var filename = "libro-ahorro-" + todayMonthKey() + ".json";
+    try {
+      var blob = new Blob([json], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch(e){
+      alert("No se pudo exportar la copia en esta vista.");
+    }
   });
   document.getElementById("importBtn").addEventListener("click", function(){
     document.getElementById("importFile").click();
@@ -892,9 +956,7 @@
     var reader = new FileReader();
     reader.onload = function(ev){
       try {
-        var data = JSON.parse(ev.target.result);
-        var def = defaultState();
-        for (var k in def) if (!(k in data)) data[k] = def[k];
+        var data = mergeDefaults(JSON.parse(ev.target.result));
         state = data;
         saveState();
         render();
@@ -907,6 +969,9 @@
     e.target.value = "";
   });
 
+  // Arranque inmediato y síncrono: sin esperas de red, sin datos remotos
+  // que puedan pisar lo que acabas de escribir.
+  setSyncStatus(true, "guardado en este navegador");
   render();
 })();
 </script>
