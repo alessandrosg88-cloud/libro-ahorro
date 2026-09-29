@@ -108,6 +108,10 @@
 .cum-summary .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
 .cum-summary b { color: var(--ink); margin-left: 4px; }
 .cum-note { font-size: 0.75rem; color: var(--ink-mute); margin: 0; }
+.cat-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.75rem; color: var(--ink-mute); }
+.cat-chip { display: inline-flex; align-items: center; gap: 2px; background: var(--emerg-soft); color: var(--ink); border-radius: 999px; padding: 3px 4px 3px 10px; }
+.cat-chip button { background: none; border: 0; color: var(--ink-mute); cursor: pointer; font-size: 0.72rem; padding: 0 5px; line-height: 1; }
+.cat-chip button:hover { color: var(--crit); }
 /* Portada de inicio de sesión */
 .auth-cover { min-height: calc(100vh - 120px); display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
 .auth-hero .brand h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); }
@@ -490,6 +494,7 @@ body.auth-out header.top { display: none; }
         <input type="text" id="emergNewCatInput" placeholder="¿en qué lo gastarás? (p. ej. Vacaciones)">
         <button type="button" class="ghost-btn" id="emergNewCatConfirm">crear</button>
       </div>
+      <div class="cat-chips"><span>Categorías del fondo:</span><span id="fondoCatChips" class="cat-chips"></span></div>
       <button type="button" class="ghost-btn out-toggle" id="withdrawToggle">− Sacar dinero del fondo</button>
       <form class="add-row out-row" id="withdrawForm" hidden>
         <select id="withdrawCat"></select>
@@ -883,6 +888,10 @@ body.auth-out header.top { display: none; }
     if (retirosMes.length) list.innerHTML += retirosMes.map(ventaRow).join("");
     fillSelect(document.getElementById("emergCat"), state.fondoCategorias || [], true);
     fillSelect(document.getElementById("withdrawCat"), state.fondoCategorias || [], false);
+    document.getElementById("fondoCatChips").innerHTML = (state.fondoCategorias || []).map(function(c){
+      return '<span class="cat-chip"><span>' + escapeHtml(c) + '</span><button type="button" data-del-fcat="' + escapeHtml(c) + '" aria-label="Eliminar" title="Eliminar">✕</button></span>';
+    }).join("");
+    if (!(state.fondoCategorias || []).length) document.getElementById("emergNewCatRow").classList.add("show");
   }
 
   function renderHistory(){
@@ -1201,6 +1210,13 @@ body.auth-out header.top { display: none; }
       else { row.classList.remove("show"); }
     });
     document.getElementById("emergNewCatConfirm").addEventListener("click", addFondoCategory);
+    document.getElementById("fondoCatChips").addEventListener("click", function(e){
+      var c = e.target.getAttribute("data-del-fcat");
+      if (c == null) return;
+      state.fondoCategorias = (state.fondoCategorias || []).filter(function(x){ return x !== c; });
+      saveState();
+      renderEmergCard();
+    });
     document.getElementById("emergNewCatInput").addEventListener("keydown", function(e){
       if (e.key === "Enter"){ e.preventDefault(); addFondoCategory(); }
     });
@@ -1465,6 +1481,7 @@ body.auth-out header.top { display: none; }
     "− Sacar dinero del fondo": ["− Preleva dal fondo", "− Withdraw from the fund"],
     "Sacar": ["Preleva", "Withdraw"],
     "Aportación": ["Versamento", "Contribution"],
+    "Categorías del fondo:": ["Categorie del fondo:", "Fund categories:"],
     "no tienes inversiones": ["non hai investimenti", "you have no investments"],
     "No tienes inversiones que vender.": ["Non hai investimenti da vendere.", "You have no investments to sell."],
     "Historial mensual": ["Storico mensile", "Monthly history"],
