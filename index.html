@@ -118,6 +118,15 @@
 .modal-sub { margin: 0 0 16px; font-size: 0.82rem; color: var(--ink-mute); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .modal-danger { background: var(--crit); color: #fff; border: 0; border-radius: 9px; padding: 8px 14px; font-family: inherit; font-weight: 600; cursor: pointer; }
+.fscope-toggle { display: flex; gap: 6px; font-size: 0.75rem; }
+.fscope-toggle button {
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-soft);
+    border-radius: 20px; padding: 4px 11px; cursor: pointer; font-family: inherit;
+  }
+.fscope-toggle button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); font-weight: 600; }
+.fscope-toggle button").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".fscope-toggle button").forEach(function(b){ b.classList.remove("active"); }
 /* Portada de inicio de sesión */
 .auth-cover { min-height: calc(100vh - 120px); display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
 .auth-hero .brand h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); }
@@ -512,6 +521,15 @@ body.auth-out header.top { display: none; }
       <div id="emergLimitMsg" class="limit-msg" hidden></div>
 
       <div class="entries-list" id="emergEntries"></div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px;border-top:1px dashed var(--line)">
+        <div class="cat-chips"><span>Registro del fondo por categoría</span></div>
+        <div class="fscope-toggle" id="fondoScopeToggle">
+          <button type="button" data-fscope="month">este mes</button>
+          <button type="button" class="active" data-fscope="all">histórico</button>
+        </div>
+        <div class="stack-bar" id="fondoStackBar"></div>
+        <div class="cat-legend" id="fondoLegend"></div>
+      </div>
     </div>
 
     <!-- HISTORY -->
@@ -898,6 +916,7 @@ body.auth-out header.top { display: none; }
       return '<span class="cat-chip"><span>' + escapeHtml(c) + '</span><button type="button" data-del-fcat="' + escapeHtml(c) + '" aria-label="Eliminar" title="Eliminar">✕</button></span>';
     }).join("");
     if (!(state.fondoCategorias || []).length) document.getElementById("emergNewCatRow").classList.add("show");
+    renderFondoBreakdown();
   }
 
   function renderHistory(){
@@ -1060,6 +1079,47 @@ body.auth-out header.top { display: none; }
       });
       el.addEventListener("mouseleave", function(){ tip.classList.remove("show"); });
     });
+  }
+  var fondoScope = "all";
+  function renderFondoBreakdown(){
+    var bar = document.getElementById("fondoStackBar"), legend = document.getElementById("fondoLegend");
+    if (!bar) return;
+    var mes = fondoScope === "month" ? currentMonth : null;
+    var SIN = "Sin categoría";
+    var cats = (state.fondoCategorias || []).slice();
+    var totals = {};
+    (mes ? emergEntriesForMonth(mes) : state.emergEntries).forEach(function(e){
+      var c = e.categoria || SIN;
+      if (cats.indexOf(c) < 0) cats.push(c);
+      totals[c] = (totals[c] || 0) + e.cantidad;
+    });
+    ventasDe("fondo", mes).forEach(function(v){
+      var c = v.categoria || SIN;
+      if (cats.indexOf(c) < 0) cats.push(c);
+      totals[c] = (totals[c] || 0) - v.cantidad;
+    });
+    var color = function(c){ return "var(" + CAT_COLORS[cats.indexOf(c) % CAT_COLORS.length] + ")"; };
+    var shown = cats.filter(function(c){ return (totals[c] || 0) !== 0; });
+    var pos = shown.filter(function(c){ return totals[c] > 0; });
+    var grand = pos.reduce(function(a, c){ return a + totals[c]; }, 0);
+    var vacio = '<div style="flex:1;background:var(--surface-2);border-radius:6px"></div>';
+    if (!shown.length){
+      bar.innerHTML = vacio;
+      legend.innerHTML = '<div class="empty-note">Sin datos todavía.</div>';
+      return;
+    }
+    bar.innerHTML = grand > 0 ? pos.map(function(c){
+      return '<div class="stack-seg" title="' + escapeHtml(c) + ': ' + fmtEur(totals[c]) + '" style="flex-basis:' + (totals[c] / grand * 100) + '%;background:' + color(c) + '"></div>';
+    }).join("") : vacio;
+    legend.innerHTML = shown.sort(function(a, b){ return totals[b] - totals[a]; }).map(function(c){
+      var pct = grand > 0 && totals[c] > 0 ? Math.round(totals[c] / grand * 100) + "%" : "";
+      return '<div class="cat-legend-row">' +
+        '<span class="dot" style="background:' + color(c) + '"></span>' +
+        '<span class="name">' + escapeHtml(c) + '</span>' +
+        '<span class="pct">' + pct + '</span>' +
+        '<span class="amt num">' + fmtEur(totals[c]) + '</span>' +
+      '</div>';
+    }).join("");
   }
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -1284,6 +1344,14 @@ body.auth-out header.top { display: none; }
         if (!vid) return;
         state.ventas = (state.ventas || []).filter(function(x){ return x.id !== vid; });
         saveState(); renderInvestCard(); renderEmergCard(); renderHistory();
+      });
+    });
+    document.querySelectorAll("#fondoScopeToggle button").forEach(function(b){
+      b.addEventListener("click", function(){
+        document.querySelectorAll("#fondoScopeToggle button").forEach(function(x){ x.classList.remove("active"); });
+        b.classList.add("active");
+        fondoScope = b.getAttribute("data-fscope");
+        renderFondoBreakdown();
       });
     });
     document.getElementById("exportBtn").addEventListener("click", function(){
@@ -1513,6 +1581,8 @@ body.auth-out header.top { display: none; }
     "Sacar": ["Preleva", "Withdraw"],
     "Aportación": ["Versamento", "Contribution"],
     "Cancelar": ["Annulla", "Cancel"],
+    "Registro del fondo por categoría": ["Registro del fondo per categoria", "Fund record by category"],
+    "Sin categoría": ["Senza categoria", "Uncategorized"],
     "Tus aportaciones anteriores no se borran.": ["I versamenti precedenti non vengono cancellati.", "Your previous contributions won't be deleted."],
     "Categorías del fondo:": ["Categorie del fondo:", "Fund categories:"],
     "no tienes inversiones": ["non hai investimenti", "you have no investments"],
