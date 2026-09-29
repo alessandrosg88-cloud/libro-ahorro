@@ -1397,6 +1397,213 @@ body.auth-out header.top { display: none; }
   }
 })();
 </script>
+<!-- Idioma: Español / Italiano / English -->
+<style>
+.lang-bar { display: flex; justify-content: flex-end; margin: -12px 0 10px; }
+.lang-btn { font-size: 0.78rem; }
+</style>
+<script>
+(function(){
+  var LANGS = ["es", "it", "en"];
+  var NAMES = { es: "Español", it: "Italiano", en: "English" };
+  // español: [italiano, inglés]
+  var T = {
+    "Libro de Ahorro": ["Libro dei Risparmi", "Savings Book"],
+    "Tú decides cuánto ahorras cada mes y cómo lo repartes.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo.", "You decide how much to save each month and how to split it."],
+    "Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo tra investimenti e fondo.", "You decide how much to save each month and how to split it between investments and fund."],
+    "guardado en tu cuenta": ["salvato nel tuo account", "saved to your account"],
+    "cargando…": ["caricamento…", "loading…"],
+    "cargando tus datos…": ["caricamento dei tuoi dati…", "loading your data…"],
+    "sin conexión, guardado local": ["offline, salvato in locale", "offline, saved locally"],
+    "sin conexión con la cuenta, guardado local": ["nessuna connessione all'account, salvato in locale", "no connection to your account, saved locally"],
+    "Cerrar sesión": ["Esci", "Sign out"],
+    "Fija tu objetivo de ahorro mensual": ["Imposta il tuo obiettivo di risparmio mensile", "Set your monthly savings goal"],
+    "Repártelo entre inversión y fondo": ["Ripartiscilo tra investimenti e fondo", "Split it between investments and fund"],
+    "Guardado en tu cuenta: entra desde cualquier dispositivo": ["Salvato nel tuo account: accedi da qualsiasi dispositivo", "Saved to your account: sign in from any device"],
+    "Inicia sesión": ["Accedi", "Sign in"],
+    "Iniciar sesión": ["Accedi", "Sign in"],
+    "Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.": ["Ti chiediamo l'email solo per creare il tuo account e salvare il tuo Libro dei Risparmi in modo sicuro, così puoi vederlo da qualsiasi dispositivo. Non la usiamo per nient'altro. La sessione resta attiva su questo dispositivo finché non premi «Esci»; te la richiederemo solo se la sessione scade o se esci.", "We only ask for your email to create your account and keep your Savings Book safe, so you can see it from any device. We don't use it for anything else. You stay signed in on this device until you press «Sign out»; we'll only ask again if your session expires or you sign out."],
+    "Crear cuenta": ["Crea account", "Create account"],
+    "¿Olvidaste tu contraseña?": ["Password dimenticata?", "Forgot your password?"],
+    "Guardar nueva contraseña": ["Salva nuova password", "Save new password"],
+    "Recuperar contraseña": ["Recupera password", "Reset password"],
+    "Elige una nueva contraseña": ["Scegli una nuova password", "Choose a new password"],
+    "Enviar enlace de recuperación": ["Invia link di recupero", "Send reset link"],
+    "← Volver a iniciar sesión": ["← Torna all'accesso", "← Back to sign in"],
+    "No se pudo cambiar la contraseña.": ["Impossibile cambiare la password.", "Couldn't change the password."],
+    "Contraseña actualizada. Entrando…": ["Password aggiornata. Accesso in corso…", "Password updated. Signing in…"],
+    "No se pudo enviar el correo.": ["Impossibile inviare l'email.", "Couldn't send the email."],
+    "Si hay una cuenta con ese correo, te hemos enviado un enlace para cambiar la contraseña. Revisa tu bandeja de entrada y la carpeta de spam.": ["Se esiste un account con questa email, ti abbiamo inviato un link per cambiare la password. Controlla la posta in arrivo e la cartella spam.", "If there's an account with that email, we've sent you a link to change your password. Check your inbox and spam folder."],
+    "No se pudo iniciar sesión.": ["Impossibile accedere.", "Couldn't sign in."],
+    "Escribe un correo y una contraseña de al menos 6 caracteres.": ["Scrivi un'email e una password di almeno 6 caratteri.", "Enter an email and a password of at least 6 characters."],
+    "No se pudo crear la cuenta.": ["Impossibile creare l'account.", "Couldn't create the account."],
+    "Cuenta creada. Ya puedes iniciar sesión.": ["Account creato. Ora puoi accedere.", "Account created. You can sign in now."],
+    "hoy": ["oggi", "today"],
+    "Objetivo de ahorro mensual": ["Obiettivo di risparmio mensile", "Monthly savings goal"],
+    "Escribe cuánto quieres ahorrar este mes y ajusta el reparto abajo": ["Scrivi quanto vuoi risparmiare questo mese e regola la ripartizione qui sotto", "Enter how much you want to save this month and adjust the split below"],
+    "Inversión": ["Investimenti", "Investments"],
+    "Fondo": ["Fondo", "Fund"],
+    "Total": ["Totale", "Total"],
+    "Acciones": ["Azioni", "Stocks"],
+    "+ nueva categoría": ["+ nuova categoria", "+ new category"],
+    "Añadir": ["Aggiungi", "Add"],
+    "crear": ["crea", "create"],
+    "invertido en total (descontando ventas)": ["investito in totale (al netto delle vendite)", "invested in total (minus sales)"],
+    "− Registrar una venta": ["− Registra una vendita", "− Record a sale"],
+    "Vender": ["Vendi", "Sell"],
+    "este mes": ["questo mese", "this month"],
+    "histórico": ["storico", "all time"],
+    "Sin datos todavía.": ["Ancora nessun dato.", "No data yet."],
+    "Todavía no has añadido inversiones este mes.": ["Non hai ancora aggiunto investimenti questo mese.", "You haven't added any investments this month yet."],
+    "Todavía no has añadido nada al fondo este mes.": ["Non hai ancora aggiunto nulla al fondo questo mese.", "You haven't added anything to the fund this month yet."],
+    "acumulado en el fondo (todos los meses)": ["accumulato nel fondo (tutti i mesi)", "accumulated in the fund (all months)"],
+    "Imprevistos": ["Imprevisti", "Emergencies"],
+    "Viajes": ["Viaggi", "Travel"],
+    "Coche": ["Auto", "Car"],
+    "Casa": ["Casa", "Home"],
+    "Salud": ["Salute", "Health"],
+    "− Sacar dinero del fondo": ["− Preleva dal fondo", "− Withdraw from the fund"],
+    "Sacar": ["Preleva", "Withdraw"],
+    "Aportación": ["Versamento", "Contribution"],
+    "no tienes inversiones": ["non hai investimenti", "you have no investments"],
+    "No tienes inversiones que vender.": ["Non hai investimenti da vendere.", "You have no investments to sell."],
+    "Historial mensual": ["Storico mensile", "Monthly history"],
+    "objetivo": ["obiettivo", "target"],
+    "Mes": ["Mese", "Month"],
+    "Estado": ["Stato", "Status"],
+    "cumplido": ["raggiunto", "met"],
+    "por debajo": ["sotto", "below"],
+    "Total ahorrado acumulado": ["Totale risparmiato accumulato", "Total saved so far"],
+    "Suma de todo lo que has aportado mes a mes, restando lo que has vendido o sacado del fondo.": ["Somma di tutto ciò che hai versato mese per mese, meno ciò che hai venduto o prelevato dal fondo.", "Everything you've contributed month by month, minus what you've sold or withdrawn from the fund."],
+    "Tus datos se guardan en tu cuenta. Usa «Exportar copia» para descargar una copia de seguridad en cualquier momento (o para pasarlos a otro dispositivo con «Importar copia»).": ["I tuoi dati sono salvati nel tuo account. Usa «Esporta copia» per scaricare un backup in qualsiasi momento (o per trasferirli su un altro dispositivo con «Importa copia»).", "Your data is saved to your account. Use «Export backup» to download a backup at any time (or to move it to another device with «Import backup»)."],
+    "Exportar copia": ["Esporta copia", "Export backup"],
+    "Importar copia": ["Importa copia", "Import backup"],
+    "No se pudo exportar la copia en esta vista.": ["Impossibile esportare la copia in questa vista.", "Couldn't export the backup in this view."],
+    "Copia importada correctamente.": ["Copia importata correttamente.", "Backup imported successfully."],
+    "No se pudo leer el archivo. Asegúrate de que es una copia exportada desde esta misma app.": ["Impossibile leggere il file. Assicurati che sia una copia esportata da questa stessa app.", "Couldn't read the file. Make sure it's a backup exported from this same app."],
+    "Este sitio usa cookies y almacenamiento local para mantener tu sesión y guardar tus datos. Al registrarte o iniciar sesión con tu email, aceptas su uso.": ["Questo sito usa cookie e archiviazione locale per mantenere la sessione e salvare i tuoi dati. Registrandoti o accedendo con la tua email, ne accetti l'uso.", "This site uses cookies and local storage to keep you signed in and save your data. By signing up or signing in with your email, you accept their use."],
+    "Aceptar": ["Accetta", "Accept"],
+    "Correo electrónico": ["Email", "Email"],
+    "Contraseña": ["Password", "Password"],
+    "Nueva contraseña (mínimo 6 caracteres)": ["Nuova password (minimo 6 caratteri)", "New password (at least 6 characters)"],
+    "Mes anterior": ["Mese precedente", "Previous month"],
+    "Mes siguiente": ["Mese successivo", "Next month"],
+    "nota (opcional)": ["nota (facoltativa)", "note (optional)"],
+    "nombre de la categoría": ["nome della categoria", "category name"],
+    "€ vendidos": ["€ venduti", "€ sold"],
+    "Eliminar": ["Elimina", "Delete"],
+    "¿En qué lo gastarás?": ["In cosa lo spenderai?", "What will you spend it on?"],
+    "¿en qué lo gastarás? (p. ej. Vacaciones)": ["in cosa lo spenderai? (es. Vacanze)", "what will you spend it on? (e.g. Holidays)"]
+  };
+  var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  var MES_T = [
+    ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"],
+    ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  ];
+  var ABR = { ENE:["GEN","JAN"], FEB:["FEB","FEB"], MAR:["MAR","MAR"], ABR:["APR","APR"], MAY:["MAG","MAY"], JUN:["GIU","JUN"], JUL:["LUG","JUL"], AGO:["AGO","AUG"], SEP:["SET","SEP"], OCT:["OTT","OCT"], NOV:["NOV","NOV"], DIC:["DIC","DEC"] };
+  var RULES = [
+    [/^objetivo total (.+)\/mes$/, ["obiettivo totale $1/mese", "total target $1/month"]],
+    [/^objetivo (.+)$/, ["obiettivo $1", "target $1"]],
+    [/^Eso supera tu objetivo de inversión \((.+)\)\. Te quedan (.+) libres este mes\.$/, ["Supera il tuo obiettivo di investimento ($1). Ti restano $2 liberi questo mese.", "That's over your investment target ($1). You have $2 left this month."]],
+    [/^Eso supera tu objetivo de fondo \((.+)\)\. Te quedan (.+) libres este mes\.$/, ["Supera il tuo obiettivo del fondo ($1). Ti restano $2 liberi questo mese.", "That's over your fund target ($1). You have $2 left this month."]],
+    [/^Solo tienes (.+) en (.+)\.$/, ["Hai solo $1 in $2.", "You only have $1 in $2."]],
+    [/^En el fondo solo hay (.+)\.$/, ["Nel fondo ci sono solo $1.", "The fund only has $1."]]
+  ];
+  var lang = "es";
+  try { lang = localStorage.getItem("libroLang") || "es"; } catch (e) {}
+  if (LANGS.indexOf(lang) < 0) lang = "es";
+
+  function trCore(c, li){
+    if (T[c]) return T[c][li];
+    var mm = c.match(/^([a-zA-ZñÑ]+) (\d{4})$/);
+    if (mm){ var k = MES.indexOf(mm[1].toLowerCase()); if (k >= 0) return MES_T[li][k] + " " + mm[2]; }
+    if (ABR[c]) return ABR[c][li];
+    var vm = c.match(/^(Venta|Retiro) · ([\s\S]*)$/);
+    if (vm) return (vm[1] === "Venta" ? ["Vendita", "Sale"] : ["Prelievo", "Withdrawal"])[li] + " · " + (T[vm[2]] ? T[vm[2]][li] : vm[2]);
+    for (var i = 0; i < RULES.length; i++){
+      if (RULES[i][0].test(c)) return c.replace(RULES[i][0], RULES[i][1][li]);
+    }
+    return null;
+  }
+  function tr(s){
+    if (lang === "es" || !s) return s;
+    var m = s.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    if (!m[2]) return s;
+    var out = trCore(m[2], lang === "it" ? 0 : 1);
+    return out == null ? s : m[1] + out + m[3];
+  }
+
+  var ATTRS = ["placeholder", "title", "aria-label"];
+  var btn = document.createElement("button");
+  function apply(){
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var n;
+    while ((n = w.nextNode())){
+      var p = n.parentNode;
+      if (!p || p === btn || p.nodeName === "SCRIPT" || p.nodeName === "STYLE") continue;
+      if (n.__tr !== n.nodeValue) n.__es = n.nodeValue;
+      var t = tr(n.__es);
+      if (t !== n.nodeValue) n.nodeValue = t;
+      n.__tr = t;
+    }
+    document.querySelectorAll("[placeholder],[title],[aria-label]").forEach(function(el){
+      if (el === btn) return;
+      el.__esA = el.__esA || {}; el.__trA = el.__trA || {};
+      ATTRS.forEach(function(a){
+        var v = el.getAttribute(a);
+        if (v == null) return;
+        if (el.__trA[a] !== v) el.__esA[a] = v;
+        var t = tr(el.__esA[a]);
+        if (t !== v) el.setAttribute(a, t);
+        el.__trA[a] = t;
+      });
+    });
+    document.title = tr("Libro de Ahorro");
+    document.documentElement.lang = lang;
+  }
+
+  var OPTS = { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS };
+  var pending = false;
+  var obs = new MutationObserver(function(){
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(function(){
+      pending = false;
+      obs.disconnect();
+      apply();
+      obs.observe(document.body, OPTS);
+    });
+  });
+
+  btn.type = "button";
+  btn.id = "langBtn";
+  btn.className = "ghost-btn lang-btn";
+  function label(){
+    btn.textContent = "🌐 " + NAMES[lang];
+    btn.title = { es: "Cambiar idioma", it: "Cambia lingua", en: "Change language" }[lang];
+  }
+  btn.addEventListener("click", function(){
+    lang = LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];
+    try { localStorage.setItem("libroLang", lang); } catch (e) {}
+    label();
+    obs.disconnect();
+    apply();
+    obs.observe(document.body, OPTS);
+  });
+  var bar = document.createElement("div");
+  bar.className = "lang-bar";
+  bar.appendChild(btn);
+  var sheet = document.querySelector(".sheet") || document.body;
+  sheet.insertBefore(bar, sheet.firstChild);
+
+  var _alert = window.alert;
+  window.alert = function(m){ return _alert.call(window, tr(String(m))); };
+
+  label();
+  apply();
+  obs.observe(document.body, OPTS);
+})();
+</script>
 <!-- Aviso de cookies -->
 <div id="cookie-banner" style="position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:640px;margin:0 auto;background:#1f2937;color:#fff;padding:14px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);font:14px/1.4 system-ui,sans-serif;display:none;gap:12px;align-items:center;flex-wrap:wrap">
   <span style="flex:1;min-width:200px">Este sitio usa cookies y almacenamiento local para mantener tu sesión y guardar tus datos. Al registrarte o iniciar sesión con tu email, aceptas su uso.</span>
