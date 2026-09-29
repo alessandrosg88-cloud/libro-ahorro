@@ -100,6 +100,14 @@
   }
 
   * { box-sizing: border-box; }
+/* Ventas, retiros y total acumulado */
+.out-toggle { align-self: flex-start; font-size: 0.78rem; }
+.out-row button[type="submit"] { background: var(--crit) !important; color: #fff !important; }
+.entry-row.venta .name { color: var(--crit); }
+.cum-summary { display: flex; flex-wrap: wrap; gap: 18px; font-size: 0.85rem; color: var(--ink-soft); }
+.cum-summary .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.cum-summary b { color: var(--ink); margin-left: 4px; }
+.cum-note { font-size: 0.75rem; color: var(--ink-mute); margin: 0; }
 /* Portada de inicio de sesión */
 .auth-cover { min-height: calc(100vh - 120px); display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
 .auth-hero .brand h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); }
@@ -429,6 +437,18 @@ body.auth-out header.top { display: none; }
         <input type="text" id="newCatInput" placeholder="nombre de la categoría">
         <button type="button" class="ghost-btn" id="newCatConfirm">crear</button>
       </div>
+      <div class="fund-total">
+        <span class="n num" id="investAllTotal">0 €</span>
+        <span class="l">invertido en total (descontando ventas)</span>
+      </div>
+      <button type="button" class="ghost-btn out-toggle" id="sellToggle">− Registrar una venta</button>
+      <form class="add-row out-row" id="sellForm" hidden>
+        <select id="sellCat"></select>
+        <input type="number" id="sellAmt" placeholder="€ vendidos" min="0" step="0.01" required>
+        <input type="text" id="sellNote" placeholder="nota (opcional)">
+        <button type="submit">Vender</button>
+      </form>
+      <div id="sellMsg" class="limit-msg" hidden></div>
       <div id="investLimitMsg" class="limit-msg" hidden></div>
 
       <div class="entries-list" id="investEntries"></div>
@@ -461,10 +481,23 @@ body.auth-out header.top { display: none; }
       </div>
 
       <form class="add-row emerg" id="emergForm">
+        <select id="emergCat" title="¿En qué lo gastarás?"></select>
         <input type="number" id="emergAmt" placeholder="€" min="0" step="1" required style="width:110px">
         <input type="text" id="emergNote" placeholder="nota (opcional)">
         <button type="submit">Añadir</button>
       </form>
+      <div class="new-cat-row" id="emergNewCatRow">
+        <input type="text" id="emergNewCatInput" placeholder="¿en qué lo gastarás? (p. ej. Vacaciones)">
+        <button type="button" class="ghost-btn" id="emergNewCatConfirm">crear</button>
+      </div>
+      <button type="button" class="ghost-btn out-toggle" id="withdrawToggle">− Sacar dinero del fondo</button>
+      <form class="add-row out-row" id="withdrawForm" hidden>
+        <select id="withdrawCat"></select>
+        <input type="number" id="withdrawAmt" placeholder="€" min="0" step="0.01" required>
+        <input type="text" id="withdrawNote" placeholder="nota (opcional)">
+        <button type="submit">Sacar</button>
+      </form>
+      <div id="withdrawMsg" class="limit-msg" hidden></div>
       <div id="emergLimitMsg" class="limit-msg" hidden></div>
 
       <div class="entries-list" id="emergEntries"></div>
@@ -489,6 +522,23 @@ body.auth-out header.top { display: none; }
           <tbody id="historyBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- TOTAL ACUMULADO -->
+    <div class="card wide">
+      <div class="card-head">
+        <h2>Total ahorrado acumulado</h2>
+        <span class="card-target num" id="cumTotalLabel">0 €</span>
+      </div>
+      <div class="cum-summary">
+        <div><span class="dot" style="background:var(--accent)"></span>Inversión <b class="num" id="cumInvest">0 €</b></div>
+        <div><span class="dot" style="background:var(--emerg)"></span>Fondo <b class="num" id="cumFondo">0 €</b></div>
+        <div><span class="dot" style="background:var(--ink)"></span>Total <b class="num" id="cumTotal">0 €</b></div>
+      </div>
+      <div class="chart-wrap">
+        <svg class="trend" id="cumChart" viewBox="0 0 800 220" style="width:100%;height:auto;display:block"></svg>
+      </div>
+      <p class="cum-note">Suma de todo lo que has aportado mes a mes, restando lo que has vendido o sacado del fondo.</p>
     </div>
 
   </div>
@@ -545,7 +595,9 @@ body.auth-out header.top { display: none; }
       investObjetivo: 0,
       categorias: ["Bitcoin","ETF","Acciones"],
       entries: [],       // {id, mes, categoria, cantidad, nota, fecha}
-      emergEntries: []   // {id, mes, cantidad, nota, fecha}
+      emergEntries: [],  // {id, mes, categoria, cantidad, nota, fecha}
+      fondoCategorias: ["Imprevistos","Viajes","Coche","Casa","Salud"],
+      ventas: []         // {id, mes, tipo: "invest"|"fondo", categoria, cantidad, nota, fecha}
     };
   }
   function mergeDefaults(data){
@@ -624,7 +676,31 @@ body.auth-out header.top { display: none; }
 
   function investTotalMonth(mes){ return sum(investEntriesForMonth(mes), "cantidad"); }
   function emergTotalMonth(mes){ return sum(emergEntriesForMonth(mes), "cantidad"); }
-  function emergFundTotal(){ return sum(state.emergEntries, "cantidad"); }
+  function ventasDe(tipo, mes){ return (state.ventas || []).filter(function(v){ return v.tipo === tipo && (!mes || v.mes === mes); }); }
+  function emergFundTotal(){ return sum(state.emergEntries, "cantidad") - sum(ventasDe("fondo"), "cantidad"); }
+  function investHolding(cat){
+    var dentro = sum(state.entries.filter(function(e){ return e.categoria === cat; }), "cantidad");
+    var fuera = sum(ventasDe("invest").filter(function(v){ return v.categoria === cat; }), "cantidad");
+    return dentro - fuera;
+  }
+  function investTotalAll(){ return sum(state.entries, "cantidad") - sum(ventasDe("invest"), "cantidad"); }
+  function fillSelect(sel, items, withNew, emptyText){
+    var prev = sel.value;
+    sel.innerHTML = "";
+    items.forEach(function(c){ var o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o); });
+    if (!items.length && emptyText){ var e = document.createElement("option"); e.value = ""; e.textContent = emptyText; sel.appendChild(e); }
+    if (withNew){ var o2 = document.createElement("option"); o2.value = "__nueva__"; o2.textContent = "+ nueva categoría"; sel.appendChild(o2); }
+    if (items.indexOf(prev) >= 0) sel.value = prev;
+  }
+  function ventaRow(v){
+    return '<div class="entry-row venta">' +
+      '<span class="dot" style="background:var(--crit)"></span>' +
+      '<span class="entry-cat"><span class="name">' + (v.tipo === "invest" ? "Venta" : "Retiro") + ' · ' + escapeHtml(v.categoria || "") + '</span>' +
+      (v.nota ? '<span class="note"> · ' + escapeHtml(v.nota) + '</span>' : '') + '</span>' +
+      '<span class="entry-amt num" style="color:var(--crit)">−' + fmtEur(v.cantidad) + '</span>' +
+      '<button class="entry-del" data-del-venta="' + v.id + '" aria-label="Eliminar">✕</button>' +
+    '</div>';
+  }
 
   function categoryColor(cat){
     var idx = state.categorias.indexOf(cat);
@@ -637,6 +713,7 @@ body.auth-out header.top { display: none; }
     var set = {};
     state.entries.forEach(function(e){ set[e.mes] = true; });
     state.emergEntries.forEach(function(e){ set[e.mes] = true; });
+    (state.ventas || []).forEach(function(v){ set[v.mes] = true; });
     set[currentMonth] = true;
     set[todayMonthKey()] = true;
     var months = Object.keys(set).sort();
@@ -730,6 +807,14 @@ body.auth-out header.top { display: none; }
       }).join("");
     }
 
+    var ventasMes = ventasDe("invest", currentMonth);
+
+    if (ventasMes.length) list.innerHTML += ventasMes.map(ventaRow).join("");
+
+    document.getElementById("investAllTotal").textContent = fmtEur(investTotalAll());
+
+    fillSelect(document.getElementById("sellCat"), state.categorias.filter(function(c){ return investHolding(c) > 0; }), false, "no tienes inversiones");
+
     renderCategoryBreakdown();
   }
 
@@ -738,6 +823,7 @@ body.auth-out header.top { display: none; }
     var totals = {};
     state.categorias.forEach(function(c){ totals[c] = 0; });
     source.forEach(function(e){ totals[e.categoria] = (totals[e.categoria]||0) + e.cantidad; });
+    (breakdownScope === "month" ? ventasDe("invest", currentMonth) : ventasDe("invest")).forEach(function(v){ totals[v.categoria] = (totals[v.categoria]||0) - v.cantidad; });
     var cats = Object.keys(totals).filter(function(c){ return totals[c] > 0; });
     var grand = cats.reduce(function(a,c){ return a + totals[c]; }, 0);
 
@@ -786,13 +872,17 @@ body.auth-out header.top { display: none; }
       list.innerHTML = entries.map(function(e){
         return '<div class="entry-row">' +
           '<span class="dot emerg" style="background:var(--emerg)"></span>' +
-          '<span class="entry-cat"><span class="name">Aportación</span>' +
+          '<span class="entry-cat"><span class="name">'+escapeHtml(e.categoria || "Aportación")+'</span>' +
           (e.nota ? '<span class="note"> · '+escapeHtml(e.nota)+'</span>' : '') + '</span>' +
           '<span class="entry-amt num">'+fmtEur(e.cantidad)+'</span>' +
           '<button class="entry-del" data-del-emerg="'+e.id+'" aria-label="Eliminar">✕</button>' +
           '</div>';
       }).join("");
     }
+    var retirosMes = ventasDe("fondo", currentMonth);
+    if (retirosMes.length) list.innerHTML += retirosMes.map(ventaRow).join("");
+    fillSelect(document.getElementById("emergCat"), state.fondoCategorias || [], true);
+    fillSelect(document.getElementById("withdrawCat"), state.fondoCategorias || [], false);
   }
 
   function renderHistory(){
@@ -814,6 +904,7 @@ body.auth-out header.top { display: none; }
     }).join("");
 
     renderTrendChart(months, target);
+    renderCumulative();
   }
 
   function renderTrendChart(months, target){
@@ -889,6 +980,72 @@ body.auth-out header.top { display: none; }
     });
   }
 
+  function renderCumulative(){
+    var svg = document.getElementById("cumChart");
+    if (!svg) return;
+    var keys = allMonthsWithData();
+    var months = [];
+    for (var mk = keys[0]; mk <= keys[keys.length - 1] && months.length < 240; mk = addMonths(mk, 1)) months.push(mk);
+    var accInv = 0, accFon = 0;
+    var pts = months.map(function(m){
+      accInv += investTotalMonth(m) - sum(ventasDe("invest", m), "cantidad");
+      accFon += emergTotalMonth(m) - sum(ventasDe("fondo", m), "cantidad");
+      return { m: m, inv: accInv, fon: accFon, tot: accInv + accFon };
+    });
+    var totInv = investTotalAll(), totFon = emergFundTotal();
+    document.getElementById("cumInvest").textContent = fmtEur(totInv);
+    document.getElementById("cumFondo").textContent = fmtEur(totFon);
+    document.getElementById("cumTotal").textContent = fmtEur(totInv + totFon);
+    document.getElementById("cumTotalLabel").textContent = fmtEur(totInv + totFon);
+    var W = 800, H = 220, padL = 48, padR = 16, padT = 14, padB = 30;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxVal = 1, minVal = 0;
+    pts.forEach(function(p){ maxVal = Math.max(maxVal, p.tot, p.inv, p.fon); minVal = Math.min(minVal, p.tot, p.inv, p.fon); });
+    maxVal = maxVal * 1.15;
+    var n = pts.length;
+    var xAt = function(i){ return n <= 1 ? padL + plotW / 2 : padL + plotW * i / (n - 1); };
+    var yAt = function(v){ return padT + plotH - ((v - minVal) / (maxVal - minVal) * plotH); };
+    var parts = [];
+    for (var s = 0; s <= 4; s++){
+      var gv = minVal + (maxVal - minVal) / 4 * s, gy = yAt(gv);
+      parts.push('<line class="gridline" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + gy + '" y2="' + gy + '"/>');
+      parts.push('<text x="' + (padL - 6) + '" y="' + (gy + 3) + '" text-anchor="end">' + Math.round(gv) + '</text>');
+    }
+    function linea(key, color, width){
+      return '<polyline fill="none" stroke="' + color + '" stroke-width="' + width + '" stroke-linejoin="round" stroke-linecap="round" points="' +
+        pts.map(function(p, i){ return xAt(i) + ',' + yAt(p[key]); }).join(' ') + '"/>';
+    }
+    if (n > 1){
+      var area = 'M' + xAt(0) + ',' + yAt(0) + ' ' + pts.map(function(p, i){ return 'L' + xAt(i) + ',' + yAt(p.tot); }).join(' ') + ' L' + xAt(n - 1) + ',' + yAt(0) + ' Z';
+      parts.push('<path d="' + area + '" fill="var(--ink)" opacity="0.06"/>');
+      parts.push(linea("inv", "var(--accent)", 2));
+      parts.push(linea("fon", "var(--emerg)", 2));
+      parts.push(linea("tot", "var(--ink)", 3));
+    }
+    var every = Math.max(1, Math.ceil(n / 12));
+    var slotW = plotW / Math.max(n, 1);
+    pts.forEach(function(p, i){
+      if (i % every === 0 || i === n - 1) parts.push('<text x="' + xAt(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + monthKeyToLabel(p.m).slice(0,3).toUpperCase() + '</text>');
+      parts.push('<circle cx="' + xAt(i) + '" cy="' + yAt(p.tot) + '" r="4" fill="var(--ink)"/>');
+      parts.push('<rect data-cum="' + i + '" x="' + (xAt(i) - slotW / 2) + '" y="' + padT + '" width="' + slotW + '" height="' + plotH + '" fill="transparent"/>');
+    });
+    svg.innerHTML = parts.join("");
+    var tip = document.getElementById("tip");
+    svg.querySelectorAll("[data-cum]").forEach(function(el){
+      el.addEventListener("mousemove", function(ev){
+        var p = pts[+el.getAttribute("data-cum")];
+        tip.innerHTML =
+          '<div style="font-weight:600;margin-bottom:3px;text-transform:capitalize">' + monthKeyToLabel(p.m) + '</div>' +
+          '<div class="row"><span class="dot" style="background:var(--accent)"></span>Inversión <b>' + fmtEur(p.inv) + '</b></div>' +
+          '<div class="row"><span class="dot" style="background:var(--emerg)"></span>Fondo <b>' + fmtEur(p.fon) + '</b></div>' +
+          '<div class="row"><span class="dot" style="background:var(--ink)"></span>Total <b>' + fmtEur(p.tot) + '</b></div>';
+        tip.style.left = ev.clientX + "px";
+        tip.style.top = ev.clientY + "px";
+        tip.classList.add("show");
+      });
+      el.addEventListener("mouseleave", function(){ tip.classList.remove("show"); });
+    });
+  }
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
@@ -992,7 +1149,7 @@ body.auth-out header.top { display: none; }
     hideLimitMsg("emergLimitMsg");
 
     var note = document.getElementById("emergNote").value.trim();
-    state.emergEntries.push({ id: uid(), mes: currentMonth, cantidad: amt, nota: note, fecha: new Date().toISOString() });
+    state.emergEntries.push({ id: uid(), mes: currentMonth, categoria: fondoCatSeleccionada(), cantidad: amt, nota: note, fecha: new Date().toISOString() });
     saveState();
     amtInput.value = ""; document.getElementById("emergNote").value = "";
     renderEmergCard(); renderHistory();
@@ -1020,7 +1177,80 @@ body.auth-out header.top { display: none; }
     });
   });
 
-  document.getElementById("exportBtn").addEventListener("click", function(){
+  // ---- Fondo: en qué lo gastarás ----
+    function fondoCatSeleccionada(){
+      var c = document.getElementById("emergCat").value;
+      if (c === "__nueva__"){ addFondoCategory(); c = document.getElementById("emergCat").value; }
+      return c === "__nueva__" ? "" : c;
+    }
+    function addFondoCategory(){
+      var input = document.getElementById("emergNewCatInput");
+      var name = input.value.trim();
+      if (!name) return;
+      state.fondoCategorias = state.fondoCategorias || [];
+      if (state.fondoCategorias.indexOf(name) < 0) state.fondoCategorias.push(name);
+      input.value = "";
+      document.getElementById("emergNewCatRow").classList.remove("show");
+      saveState();
+      renderEmergCard();
+      document.getElementById("emergCat").value = name;
+    }
+    document.getElementById("emergCat").addEventListener("change", function(){
+      var row = document.getElementById("emergNewCatRow");
+      if (this.value === "__nueva__"){ row.classList.add("show"); document.getElementById("emergNewCatInput").focus(); }
+      else { row.classList.remove("show"); }
+    });
+    document.getElementById("emergNewCatConfirm").addEventListener("click", addFondoCategory);
+    document.getElementById("emergNewCatInput").addEventListener("keydown", function(e){
+      if (e.key === "Enter"){ e.preventDefault(); addFondoCategory(); }
+    });
+    // ---- Vender inversiones / sacar del fondo ----
+    document.getElementById("sellToggle").addEventListener("click", function(){
+      var f = document.getElementById("sellForm"); f.hidden = !f.hidden; hideLimitMsg("sellMsg");
+    });
+    document.getElementById("withdrawToggle").addEventListener("click", function(){
+      var f = document.getElementById("withdrawForm"); f.hidden = !f.hidden; hideLimitMsg("withdrawMsg");
+    });
+    document.getElementById("sellForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var cat = document.getElementById("sellCat").value;
+      var amt = parseFloat(document.getElementById("sellAmt").value);
+      if (!cat){ showLimitMsg("sellMsg", "No tienes inversiones que vender."); return; }
+      if (isNaN(amt) || amt <= 0) return;
+      var disponible = investHolding(cat);
+      if (amt > disponible + 0.001){ showLimitMsg("sellMsg", "Solo tienes " + fmtEur(disponible) + " en " + cat + "."); return; }
+      hideLimitMsg("sellMsg");
+      state.ventas = state.ventas || [];
+      state.ventas.push({ id: uid(), mes: currentMonth, tipo: "invest", categoria: cat, cantidad: amt, nota: document.getElementById("sellNote").value.trim(), fecha: new Date().toISOString() });
+      saveState();
+      document.getElementById("sellAmt").value = ""; document.getElementById("sellNote").value = "";
+      document.getElementById("sellForm").hidden = true;
+      renderInvestCard(); renderHistory();
+    });
+    document.getElementById("withdrawForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var cat = document.getElementById("withdrawCat").value;
+      var amt = parseFloat(document.getElementById("withdrawAmt").value);
+      if (isNaN(amt) || amt <= 0) return;
+      var disponible = emergFundTotal();
+      if (amt > disponible + 0.001){ showLimitMsg("withdrawMsg", "En el fondo solo hay " + fmtEur(disponible) + "."); return; }
+      hideLimitMsg("withdrawMsg");
+      state.ventas = state.ventas || [];
+      state.ventas.push({ id: uid(), mes: currentMonth, tipo: "fondo", categoria: cat, cantidad: amt, nota: document.getElementById("withdrawNote").value.trim(), fecha: new Date().toISOString() });
+      saveState();
+      document.getElementById("withdrawAmt").value = ""; document.getElementById("withdrawNote").value = "";
+      document.getElementById("withdrawForm").hidden = true;
+      renderEmergCard(); renderHistory();
+    });
+    ["investEntries", "emergEntries"].forEach(function(listId){
+      document.getElementById(listId).addEventListener("click", function(e){
+        var vid = e.target.getAttribute("data-del-venta");
+        if (!vid) return;
+        state.ventas = (state.ventas || []).filter(function(x){ return x.id !== vid; });
+        saveState(); renderInvestCard(); renderEmergCard(); renderHistory();
+      });
+    });
+    document.getElementById("exportBtn").addEventListener("click", function(){
     var json = JSON.stringify(state, null, 2);
     var filename = "libro-ahorro-" + todayMonthKey() + ".json";
     try {
