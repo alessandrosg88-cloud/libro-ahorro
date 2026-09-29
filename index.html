@@ -7,7 +7,7 @@
 <title>Libro de Ahorro</title>
 </head>
 <body>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="fonts.css" rel="stylesheet">
 <style>
   :root {
     color-scheme: light;
@@ -375,6 +375,7 @@ body.auth-out header.top { display: none; }
       <h2 id="authHeading">Inicia sesión</h2>
     </div>
     <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.</p>
+    <p style="font-size:0.75rem;margin:0"><a href="privacidad.html" style="color:var(--accent)">Al crear una cuenta aceptas la política de privacidad</a></p>
     <form id="authForm" style="display:flex;flex-direction:column;gap:10px">
       <input type="email" id="authEmail" placeholder="Correo electrónico" autocomplete="email" required style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
       <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password" required minlength="6" style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
@@ -573,6 +574,7 @@ body.auth-out header.top { display: none; }
       <button class="ghost-btn" id="importBtn">Importar copia</button>
       <input type="file" id="importFile" accept="application/json" style="display:none">
     </div>
+    <p class="foot-note" style="width:100%"><a href="privacidad.html" style="color:var(--accent)">Privacidad y cookies</a></p>
   </footer>
 
   </div>
@@ -581,7 +583,7 @@ body.auth-out header.top { display: none; }
 
 <div class="tip" id="tip"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+<script src="supabase.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1575,6 +1577,9 @@ body.auth-out header.top { display: none; }
     "Sacar": ["Preleva", "Withdraw"],
     "Aportación": ["Versamento", "Contribution"],
     "Cancelar": ["Annulla", "Cancel"],
+    "Privacidad y cookies": ["Privacy e cookie", "Privacy & cookies"],
+    "Al crear una cuenta aceptas la política de privacidad": ["Creando un account accetti l'informativa sulla privacy", "By creating an account you accept the privacy policy"],
+    "Más información": ["Maggiori informazioni", "More info"],
     "Compartir": ["Condividi", "Share"],
     "Más opciones…": ["Altre opzioni…", "More options…"],
     "Mensaje de texto": ["Messaggio di testo", "Text message"],
@@ -1828,7 +1833,7 @@ body.auth-out header.top { display: none; }
 </script>
 <!-- Aviso de cookies -->
 <div id="cookie-banner" style="position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:640px;margin:0 auto;background:#1f2937;color:#fff;padding:14px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);font:14px/1.4 system-ui,sans-serif;display:none;gap:12px;align-items:center;flex-wrap:wrap">
-  <span style="flex:1;min-width:200px">Este sitio usa cookies y almacenamiento local para mantener tu sesión y guardar tus datos. Al registrarte o iniciar sesión con tu email, aceptas su uso.</span>
+  <span style="flex:1;min-width:200px">Este sitio usa cookies y almacenamiento local para mantener tu sesión y guardar tus datos. Al registrarte o iniciar sesión con tu email, aceptas su uso. <a href="privacidad.html" style="color:#fff;text-decoration:underline">Más información</a></span>
   <button id="cookie-accept" type="button" style="background:#fff;color:#1f2937;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer">Aceptar</button>
 </div>
 <script>
