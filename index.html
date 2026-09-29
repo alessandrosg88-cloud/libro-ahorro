@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>:root{color-scheme:light}body{margin:0;padding:0}img{max-width:100%}</style>
+<style>:root{color-scheme:light}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none !important}</style>
 <title>Libro de Ahorro</title>
 </head>
 <body>
@@ -331,7 +331,7 @@
     <div class="card-head">
       <h2>Inicia sesión</h2>
     </div>
-    <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Tus datos del Libro de Ahorro se guardan en tu cuenta, no solo en este navegador.</p>
+    <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.</p>
     <form id="authForm" style="display:flex;flex-direction:column;gap:10px">
       <input type="email" id="authEmail" placeholder="Correo electrónico" autocomplete="email" required style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
       <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password" required minlength="6" style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
@@ -1086,8 +1086,10 @@
 
     sb.auth.onAuthStateChange(function(event, session){
       if (session && session.user) {
+        // Si solo se renovó el token del mismo usuario, no recargamos la app
+        var sameUser = currentUser && currentUser.id === session.user.id;
         currentUser = session.user;
-        showApp(session.user);
+        if (!sameUser) showApp(session.user);
       } else {
         currentUser = null;
         showAuthGate();
