@@ -100,6 +100,18 @@
   }
 
   * { box-sizing: border-box; }
+/* Portada de inicio de sesión */
+.auth-cover { min-height: calc(100vh - 120px); display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+.auth-hero .brand h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); }
+.auth-hero .mark { font-size: 2.4rem; }
+.auth-lead { font-size: 1.1rem; color: var(--ink-soft); margin: 14px 0 22px; max-width: 34ch; line-height: 1.5; }
+.auth-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; font-weight: 500; }
+.auth-points li::before { content: "✓"; color: var(--accent); font-weight: 700; margin-right: 10px; }
+.auth-card { max-width: 400px; width: 100%; justify-self: end; }
+.link-btn { background: none; border: 0; padding: 4px 0 0; color: var(--accent); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; align-self: center; }
+.link-btn:hover { text-decoration: underline; }
+body.auth-out header.top { display: none; }
+@media (max-width: 720px) { .auth-cover { grid-template-columns: 1fr; min-height: auto; gap: 24px; } .auth-card { justify-self: stretch; max-width: none; } }
   html, body { margin: 0; padding: 0; }
   body {
     background: var(--page-edge);
@@ -327,9 +339,19 @@
     </div>
   </header>
 
-  <div id="authGate" class="card" style="max-width:380px;margin:60px auto 0" hidden>
+  <div id="authGate" class="auth-cover" hidden>
+    <div class="auth-hero">
+      <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
+      <p class="auth-lead">Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo de emergencia.</p>
+      <ul class="auth-points">
+        <li>Fija tu objetivo de ahorro mensual</li>
+        <li>Repártelo entre inversión y emergencias</li>
+        <li>Guardado en tu cuenta: entra desde cualquier dispositivo</li>
+      </ul>
+    </div>
+    <div class="card auth-card">
     <div class="card-head">
-      <h2>Inicia sesión</h2>
+      <h2 id="authHeading">Inicia sesión</h2>
     </div>
     <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.</p>
     <form id="authForm" style="display:flex;flex-direction:column;gap:10px">
@@ -339,8 +361,14 @@
         <button type="submit" id="authLoginBtn" style="flex:1;font-family:inherit;font-size:0.85rem;font-weight:600;padding:9px 14px;border:none;border-radius:9px;background:var(--accent);color:var(--accent-ink);cursor:pointer">Iniciar sesión</button>
         <button type="button" id="authSignupBtn" class="ghost-btn" style="flex:1">Crear cuenta</button>
       </div>
-      <div id="authMsg" class="limit-msg" hidden></div>
+      <button type="button" id="forgotBtn" class="link-btn">¿Olvidaste tu contraseña?</button>
     </form>
+    <form id="newPassForm" hidden style="display:flex;flex-direction:column;gap:10px">
+      <input type="password" id="newPassword" placeholder="Nueva contraseña (mínimo 6 caracteres)" autocomplete="new-password" required minlength="6" style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
+      <button type="submit" id="newPassSubmit" style="font-family:inherit;font-size:0.85rem;font-weight:600;padding:9px 14px;border:none;border-radius:9px;background:var(--accent);color:var(--accent-ink);cursor:pointer">Guardar nueva contraseña</button>
+    </form>
+    <div id="authMsg" class="limit-msg" hidden></div>
+    </div>
   </div>
 
   <div id="appRoot" hidden>
@@ -1030,11 +1058,13 @@
 
   // ---------- autenticación ----------
   function showAuthGate(){
+    document.body.classList.add("auth-out");
     document.getElementById("authGate").hidden = false;
     document.getElementById("appRoot").hidden = true;
     document.getElementById("accountBar").hidden = true;
   }
   async function showApp(user){
+    document.body.classList.remove("auth-out");
     document.getElementById("authGate").hidden = true;
     document.getElementById("appRoot").hidden = false;
     document.getElementById("accountBar").hidden = false;
@@ -1060,11 +1090,45 @@
     setSyncStatus(false, "sin conexión con la cuenta, guardado local");
     render();
   } else {
+    var authMode = "login";
+    var recovering = /type=recovery/.test(location.hash);
+    function setAuthMode(m){
+      authMode = m;
+      var titles = { login: "Inicia sesión", recover: "Recuperar contraseña", newpass: "Elige una nueva contraseña" };
+      document.getElementById("authHeading").textContent = titles[m];
+      document.getElementById("authForm").hidden = (m === "newpass");
+      document.getElementById("newPassForm").hidden = (m !== "newpass");
+      var pw = document.getElementById("authPassword");
+      pw.hidden = (m === "recover");
+      pw.required = (m === "login");
+      document.getElementById("authSignupBtn").hidden = (m !== "login");
+      document.getElementById("authLoginBtn").textContent = m === "recover" ? "Enviar enlace de recuperación" : "Iniciar sesión";
+      document.getElementById("forgotBtn").textContent = m === "recover" ? "← Volver a iniciar sesión" : "¿Olvidaste tu contraseña?";
+      document.getElementById("authMsg").hidden = true;
+    }
+    document.getElementById("forgotBtn").addEventListener("click", function(){
+      setAuthMode(authMode === "recover" ? "login" : "recover");
+    });
+    document.getElementById("newPassForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      var btn = document.getElementById("newPassSubmit");
+      btn.disabled = true;
+      var res = await sb.auth.updateUser({ password: document.getElementById("newPassword").value });
+      if (res.error) { authMsg(res.error.message || "No se pudo cambiar la contraseña."); btn.disabled = false; return; }
+      authMsg("Contraseña actualizada. Entrando…");
+      recovering = false;
+      setTimeout(function(){ location.replace(location.pathname); }, 800);
+    });
     document.getElementById("authForm").addEventListener("submit", async function(e){
       e.preventDefault();
       document.getElementById("authMsg").hidden = true;
       var email = document.getElementById("authEmail").value.trim();
       var password = document.getElementById("authPassword").value;
+      if (authMode === "recover") {
+        var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+        authMsg(r.error ? (r.error.message || "No se pudo enviar el correo.") : "Si hay una cuenta con ese correo, te hemos enviado un enlace para cambiar la contraseña. Revisa tu bandeja de entrada y la carpeta de spam.");
+        return;
+      }
       var res = await sb.auth.signInWithPassword({ email: email, password: password });
       if (res.error) authMsg(res.error.message || "No se pudo iniciar sesión.");
     });
@@ -1076,7 +1140,7 @@
         authMsg("Escribe un correo y una contraseña de al menos 6 caracteres.");
         return;
       }
-      var res = await sb.auth.signUp({ email: email, password: password });
+      var res = await sb.auth.signUp({ email: email, password: password, options: { emailRedirectTo: location.origin + location.pathname } });
       if (res.error) authMsg(res.error.message || "No se pudo crear la cuenta.");
       else if (!res.data.session) authMsg("Cuenta creada. Ya puedes iniciar sesión.");
     });
@@ -1085,6 +1149,8 @@
     });
 
     sb.auth.onAuthStateChange(function(event, session){
+      if (event === "PASSWORD_RECOVERY") recovering = true;
+      if (recovering && session) { showAuthGate(); setAuthMode("newpass"); return; }
       if (session && session.user) {
         // Si solo se renovó el token del mismo usuario, no recargamos la app
         var sameUser = currentUser && currentUser.id === session.user.id;
