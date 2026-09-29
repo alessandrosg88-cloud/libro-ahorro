@@ -342,10 +342,10 @@ body.auth-out header.top { display: none; }
   <div id="authGate" class="auth-cover" hidden>
     <div class="auth-hero">
       <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
-      <p class="auth-lead">Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo de emergencia.</p>
+      <p class="auth-lead">Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.</p>
       <ul class="auth-points">
         <li>Fija tu objetivo de ahorro mensual</li>
-        <li>Repártelo entre inversión y emergencias</li>
+        <li>Repártelo entre inversión y fondo</li>
         <li>Guardado en tu cuenta: entra desde cualquier dispositivo</li>
       </ul>
     </div>
@@ -401,7 +401,7 @@ body.auth-out header.top { display: none; }
 
     <div class="split-legend">
       <span class="lg"><span class="dot invest"></span>Inversión <b class="num" id="investAmtLabel">0 €</b></span>
-      <span class="lg"><span class="dot emerg"></span>Emergencia <b class="num" id="emergAmtLabel">0 €</b></span>
+      <span class="lg"><span class="dot emerg"></span>Fondo <b class="num" id="emergAmtLabel">0 €</b></span>
     </div>
   </section>
 
@@ -446,7 +446,7 @@ body.auth-out header.top { display: none; }
     <!-- EMERGENCY CARD -->
     <div class="card">
       <div class="card-head">
-        <h2><span class="swatch" style="background:var(--emerg)"></span>Emergencia</h2>
+        <h2><span class="swatch" style="background:var(--emerg)"></span>Fondo</h2>
         <span class="card-target num" id="emergTargetLabel">objetivo 0 €</span>
       </div>
 
@@ -484,7 +484,7 @@ body.auth-out header.top { display: none; }
       <div class="table-wrap">
         <table class="history">
           <thead>
-            <tr><th>Mes</th><th class="num">Inversión</th><th class="num">Emergencia</th><th class="num">Total</th><th>Estado</th></tr>
+            <tr><th>Mes</th><th class="num">Inversión</th><th class="num">Fondo</th><th class="num">Total</th><th>Estado</th></tr>
           </thead>
           <tbody id="historyBody"></tbody>
         </table>
@@ -880,7 +880,7 @@ body.auth-out header.top { display: none; }
         tip.innerHTML =
           '<div style="font-weight:600;margin-bottom:3px;text-transform:capitalize">'+monthKeyToLabel(m)+'</div>' +
           '<div class="row"><span class="dot" style="background:var(--accent)"></span>Inversión <b>'+fmtEur(inv)+'</b></div>' +
-          '<div class="row"><span class="dot" style="background:var(--emerg)"></span>Emergencia <b>'+fmtEur(em)+'</b></div>';
+          '<div class="row"><span class="dot" style="background:var(--emerg)"></span>Fondo <b>'+fmtEur(em)+'</b></div>';
         tip.style.left = ev.clientX + "px";
         tip.style.top = ev.clientY + "px";
         tip.classList.add("show");
@@ -986,7 +986,7 @@ body.auth-out header.top { display: none; }
     var used = emergTotalMonth(currentMonth);
     var remaining = Math.max(0, target - used);
     if (amt > remaining){
-      showLimitMsg("emergLimitMsg", "Eso supera tu objetivo de emergencia (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
+      showLimitMsg("emergLimitMsg", "Eso supera tu objetivo de fondo (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
       return;
     }
     hideLimitMsg("emergLimitMsg");
