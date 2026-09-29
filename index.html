@@ -119,14 +119,8 @@
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .modal-danger { background: var(--crit); color: #fff; border: 0; border-radius: 9px; padding: 8px 14px; font-family: inherit; font-weight: 600; cursor: pointer; }
 .fscope-toggle { display: flex; gap: 6px; font-size: 0.75rem; }
-.fscope-toggle button {
-    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-soft);
-    border-radius: 20px; padding: 4px 11px; cursor: pointer; font-family: inherit;
-  }
-.fscope-toggle button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); font-weight: 600; }
-.fscope-toggle button").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      document.querySelectorAll(".fscope-toggle button").forEach(function(b){ b.classList.remove("active"); }
+.fscope-toggle button { font-family: inherit; font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink-soft); cursor: pointer; }
+.fscope-toggle button.active { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 600; }
 /* Portada de inicio de sesión */
 .auth-cover { min-height: calc(100vh - 120px); display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
 .auth-hero .brand h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); }
