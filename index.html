@@ -339,6 +339,32 @@ body.auth-out header.top { display: none; }
   }
   .ghost-btn:hover { color: var(--ink); background: var(--surface-2); }
 
+  /* ---- tu dinero ---- */
+  .money-total { font-family: "Fraunces", serif; font-size: clamp(2.2rem, 7vw, 3rem); font-weight: 600; margin: 2px 0 14px; }
+  .money-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 8px; }
+  .money-box { background: var(--surface-2); border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; font-size: 0.8rem; color: var(--ink-soft); }
+  .money-box .lbl { flex: 1; }
+  .money-box b { width: 100%; font-size: 1.15rem; color: var(--ink); }
+  .gain { font-size: 0.75rem; font-weight: 600; }
+  .gain.up { color: var(--good); } .gain.down { color: var(--crit); }
+  .money-sec { border-top: 1px dashed var(--line); padding-top: 14px; margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .money-sec h3 { font-size: 0.98rem; }
+  .money-sec h3 .sub { font-family: "IBM Plex Sans", sans-serif; font-size: 0.75rem; color: var(--ink-mute); font-weight: 400; }
+  .money-hint { font-size: 0.75rem; color: var(--ink-mute); margin: 0; }
+  .val-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+  .val-row .name { flex: 1; min-width: 120px; font-weight: 500; }
+  .val-row .aport { color: var(--ink-mute); font-size: 0.78rem; }
+  .val-input { display: inline-flex; align-items: center; gap: 4px; font-family: "IBM Plex Mono", monospace; }
+  .val-input input { width: 110px; font-family: inherit; font-size: 0.9rem; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--ink); }
+  .origen-row { display: flex; align-items: center; gap: 10px; font-size: 0.84rem; flex-wrap: wrap; }
+  .origen-row .name { flex: 1; min-width: 110px; font-weight: 500; }
+  .origen-row .nums { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; color: var(--ink-soft); }
+  .origen-row .left { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  .origen-bar { width: 100%; height: 6px; background: var(--surface-2); border-radius: 6px; overflow: hidden; }
+  .origen-bar div { height: 100%; background: var(--accent); }
+  .origen-total { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; padding-top: 6px; border-top: 1px solid var(--line-soft); }
+  form.add-row select.origen-sel { flex: 1 1 100%; }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
@@ -402,6 +428,59 @@ body.auth-out header.top { display: none; }
     <button class="month-today" id="gotoToday">hoy</button>
   </div>
 
+  <!-- TU DINERO -->
+  <section class="hero money" id="moneyCard">
+    <div class="hero-title">Tu dinero hoy</div>
+    <div class="money-total"><span id="moneyTotal">0 €</span></div>
+    <div class="money-split">
+      <div class="money-box"><span class="dot" style="background:var(--ink-soft)"></span><span class="lbl">Cuenta</span><b class="num" id="moneyCuenta">0 €</b></div>
+      <div class="money-box"><span class="dot invest"></span><span class="lbl">Inversiones (valor actual)</span><b class="num" id="moneyInv">0 €</b><span class="gain" id="moneyInvGain"></span></div>
+      <div class="money-box"><span class="dot emerg"></span><span class="lbl">Fondo</span><b class="num" id="moneyFondo">0 €</b></div>
+    </div>
+
+    <div class="money-sec">
+      <h3>Saldo en la cuenta</h3>
+      <div class="val-row">
+        <span class="name">Dinero en tu cuenta ahora</span>
+        <span class="val-input">€ <input type="number" id="saldoInput" min="0" step="0.01" placeholder="0"></span>
+      </div>
+      <p class="money-hint">Se descuenta solo cuando inviertes o ahorras «de la cuenta».</p>
+    </div>
+
+    <div class="money-sec">
+      <h3>Valor actual de tus inversiones</h3>
+      <div id="invValues"></div>
+      <p class="money-hint">Escribe cuánto valen hoy. El valor se mantiene los meses siguientes hasta que lo cambies; si aportas más, se suma solo.</p>
+    </div>
+
+    <div class="money-sec">
+      <h3>Entradas fijas <span class="sub">(se repiten cada mes)</span></h3>
+      <div class="entries-list" id="fijasList"></div>
+      <form class="add-row" id="fijaForm">
+        <input type="text" id="fijaNombre" placeholder="Nómina" list="fijaSugerencias">
+        <datalist id="fijaSugerencias"><option value="Nómina"><option value="Alquiler cobrado"><option value="Pensión"></datalist>
+        <input type="number" id="fijaAmt" placeholder="€/mes" min="0" step="0.01" required>
+        <button type="submit">Añadir</button>
+      </form>
+    </div>
+
+    <div class="money-sec">
+      <h3>Intereses <span class="sub">(este mes)</span></h3>
+      <div class="entries-list" id="interesesList"></div>
+      <form class="add-row" id="interesForm">
+        <select id="interesOrigen" title="¿De dónde vienen?"></select>
+        <input type="number" id="interesAmt" placeholder="€" min="0" step="0.01" required>
+        <input type="text" id="interesNote" placeholder="nota (opcional)">
+        <button type="submit">Añadir</button>
+      </form>
+    </div>
+
+    <div class="money-sec">
+      <h3>¿De dónde sale el dinero este mes?</h3>
+      <div id="origenResumen"></div>
+    </div>
+  </section>
+
   <section class="hero">
     <div class="hero-top">
       <div>
@@ -442,6 +521,7 @@ body.auth-out header.top { display: none; }
       </div>
 
       <form class="add-row" id="investForm">
+        <select id="investOrigen" class="origen-sel" title="¿De dónde sale el dinero?"></select>
         <select id="investCat"></select>
         <input type="number" id="investAmt" placeholder="€" min="0" step="1" required>
         <input type="text" id="investNote" placeholder="nota (opcional)">
@@ -495,6 +575,7 @@ body.auth-out header.top { display: none; }
       </div>
 
       <form class="add-row emerg" id="emergForm">
+        <select id="emergOrigen" class="origen-sel" title="¿De dónde sale el dinero?"></select>
         <select id="emergCat" title="¿En qué lo gastarás?"></select>
         <input type="number" id="emergAmt" placeholder="€" min="0" step="1" required style="width:110px">
         <input type="text" id="emergNote" placeholder="nota (opcional)">
@@ -622,7 +703,11 @@ body.auth-out header.top { display: none; }
       entries: [],       // {id, mes, categoria, cantidad, nota, fecha}
       emergEntries: [],  // {id, mes, categoria, cantidad, nota, fecha}
       fondoCategorias: ["Imprevistos","Viajes","Coche","Casa","Salud"],
-      ventas: []         // {id, mes, tipo: "invest"|"fondo", categoria, cantidad, nota, fecha}
+      ventas: [],        // {id, mes, tipo: "invest"|"fondo", categoria, cantidad, nota, fecha}
+      saldoCuenta: null,       // dinero en la cuenta (lo escribe el usuario)
+      valorInversiones: {},    // cat -> {valor, base}: valor actual escrito y lo aportado en ese momento
+      entradasFijas: [],       // {id, nombre, cantidad, desde, hasta}
+      intereses: []            // {id, mes, origen, cantidad, nota, fecha}
     };
   }
   function mergeDefaults(data){
@@ -746,6 +831,153 @@ body.auth-out header.top { display: none; }
   }
 
   // ---------- rendering ----------
+  // ---------- tu dinero: valor actual, entradas fijas, intereses, origen ----------
+  var ORIGEN_CUENTA = "cuenta", ORIGEN_INTERESES = "intereses";
+  function fijasDelMes(mes){
+    return (state.entradasFijas || []).filter(function(f){ return f.desde <= mes && (!f.hasta || f.hasta >= mes); });
+  }
+  function interesesDelMes(mes){ return (state.intereses || []).filter(function(i){ return i.mes === mes; }); }
+  function valorActualInv(cat){
+    var v = (state.valorInversiones || {})[cat];
+    var holding = investHolding(cat);
+    if (!v) return holding;
+    return Math.max(0, v.valor + (holding - v.base));
+  }
+  function catsConInversion(){
+    return state.categorias.filter(function(c){ return investHolding(c) > 0 || (state.valorInversiones || {})[c]; });
+  }
+  function totalValorInv(){ return catsConInversion().reduce(function(a, c){ return a + valorActualInv(c); }, 0); }
+  function origenLabel(o){
+    if (!o) return "";
+    if (o === ORIGEN_CUENTA) return "la cuenta";
+    if (o === ORIGEN_INTERESES) return "Intereses";
+    return o.replace(/^fija:/, "");
+  }
+  // Orígenes disponibles en un mes, con cuánto entra y cuánto se ha usado
+  function origenesDelMes(mes){
+    var out = [], idx = {};
+    fijasDelMes(mes).forEach(function(f){
+      var k = "fija:" + f.nombre;
+      if (!(k in idx)){ idx[k] = out.length; out.push({ key: k, entra: 0 }); }
+      out[idx[k]].entra += f.cantidad;
+    });
+    out.push({ key: ORIGEN_INTERESES, entra: sum(interesesDelMes(mes), "cantidad") });
+    out.push({ key: ORIGEN_CUENTA, entra: null });
+    out.forEach(function(o){ o.usado = usadoDe(o.key, mes); });
+    return out;
+  }
+  function usadoDe(origen, mes){
+    return sum(investEntriesForMonth(mes).filter(function(e){ return e.origen === origen; }), "cantidad") +
+           sum(emergEntriesForMonth(mes).filter(function(e){ return e.origen === origen; }), "cantidad");
+  }
+  // Devuelve un mensaje si no hay dinero suficiente en el origen elegido
+  function faltaDinero(origen, amt){
+    if (origen === ORIGEN_CUENTA){
+      if (state.saldoCuenta != null && amt > state.saldoCuenta + 0.001) return "En la cuenta solo tienes " + fmtEur(state.saldoCuenta) + ".";
+      return null;
+    }
+    var o = origenesDelMes(currentMonth).filter(function(x){ return x.key === origen; })[0];
+    if (!o) return null;
+    var libre = o.entra - o.usado;
+    if (amt > libre + 0.001) return "De " + origenLabel(origen) + " solo te quedan " + fmtEur(Math.max(0, libre)) + " este mes.";
+    return null;
+  }
+  function aplicarSalidaCuenta(origen, amt){
+    if (origen === ORIGEN_CUENTA && state.saldoCuenta != null) state.saldoCuenta = Math.round((state.saldoCuenta + amt) * 100) / 100;
+  }
+  function fillOrigenSelect(sel){
+    var prev = sel.value;
+    sel.innerHTML = "";
+    origenesDelMes(currentMonth).forEach(function(o){
+      var op = document.createElement("option");
+      op.value = o.key;
+      op.textContent = "Sale de: " + origenLabel(o.key) + (o.entra != null ? " (quedan " + fmtEur(Math.max(0, o.entra - o.usado)) + ")" : (state.saldoCuenta != null ? " (" + fmtEur(state.saldoCuenta) + ")" : ""));
+      sel.appendChild(op);
+    });
+    var keys = Array.prototype.map.call(sel.options, function(x){ return x.value; });
+    if (keys.indexOf(prev) >= 0) sel.value = prev;
+  }
+
+  function renderMoney(){
+    var cuenta = state.saldoCuenta || 0, inv = totalValorInv(), fondo = emergFundTotal();
+    document.getElementById("moneyTotal").textContent = fmtEur(cuenta + inv + fondo);
+    document.getElementById("moneyCuenta").textContent = fmtEur(cuenta);
+    document.getElementById("moneyInv").textContent = fmtEur(inv);
+    document.getElementById("moneyFondo").textContent = fmtEur(fondo);
+    var aportado = catsConInversion().reduce(function(a, c){ return a + investHolding(c); }, 0);
+    var g = inv - aportado, gEl = document.getElementById("moneyInvGain");
+    gEl.textContent = Math.round(g) === 0 ? "" : (g > 0 ? "+" : "−") + fmtEur(Math.abs(g));
+    gEl.className = "gain " + (g > 0 ? "up" : "down");
+
+    var saldo = document.getElementById("saldoInput");
+    if (document.activeElement !== saldo) saldo.value = state.saldoCuenta == null ? "" : state.saldoCuenta;
+
+    // valor actual de inversiones (se mantiene de un mes a otro)
+    var cats = catsConInversion();
+    var iv = document.getElementById("invValues");
+    var focused = document.activeElement && document.activeElement.getAttribute("data-valor-cat");
+    if (!cats.length){
+      iv.innerHTML = '<div class="empty-note">Cuando añadas una inversión podrás escribir aquí cuánto vale hoy.</div>';
+    } else if (!focused){
+      iv.innerHTML = cats.map(function(c){
+        var val = valorActualInv(c), ap = investHolding(c), d = val - ap;
+        return '<div class="val-row">' +
+          '<span class="dot" style="background:' + categoryColor(c) + '"></span>' +
+          '<span class="name">' + escapeHtml(c) + ' <span class="aport">· aportado ' + fmtEur(ap) + '</span>' +
+          (Math.round(d) !== 0 ? ' <span class="gain ' + (d > 0 ? "up" : "down") + '">' + (d > 0 ? "+" : "−") + fmtEur(Math.abs(d)) + '</span>' : '') + '</span>' +
+          '<span class="val-input">€ <input type="number" min="0" step="0.01" data-valor-cat="' + escapeHtml(c) + '" value="' + (Math.round(val * 100) / 100) + '"></span>' +
+        '</div>';
+      }).join("");
+    }
+
+    // entradas fijas
+    var fijas = fijasDelMes(currentMonth);
+    document.getElementById("fijasList").innerHTML = fijas.length ? fijas.map(function(f){
+      return '<div class="entry-row"><span class="dot" style="background:var(--good)"></span>' +
+        '<span class="entry-cat"><span class="name">' + escapeHtml(f.nombre) + '</span><span class="note"> · desde ' + monthKeyToLabel(f.desde) + '</span></span>' +
+        '<span class="entry-amt num">+' + fmtEur(f.cantidad) + '</span>' +
+        '<button class="entry-del" data-del-fija="' + f.id + '" aria-label="Eliminar">✕</button></div>';
+    }).join("") : '<div class="empty-note">Añade tu nómina u otras entradas que recibes cada mes.</div>';
+
+    // intereses del mes
+    var ints = interesesDelMes(currentMonth);
+    document.getElementById("interesesList").innerHTML = ints.length ? ints.map(function(i){
+      return '<div class="entry-row"><span class="dot" style="background:var(--good)"></span>' +
+        '<span class="entry-cat"><span class="name">' + escapeHtml(i.origen || "Intereses") + '</span>' + (i.nota ? '<span class="note"> · ' + escapeHtml(i.nota) + '</span>' : '') + '</span>' +
+        '<span class="entry-amt num">+' + fmtEur(i.cantidad) + '</span>' +
+        '<button class="entry-del" data-del-interes="' + i.id + '" aria-label="Eliminar">✕</button></div>';
+    }).join("") : '<div class="empty-note">Sin intereses este mes.</div>';
+    var io = document.getElementById("interesOrigen"), ioPrev = io.value;
+    io.innerHTML = "";
+    ["Cuenta", "Fondo"].concat(cats).forEach(function(c){ var o = document.createElement("option"); o.value = c; o.textContent = c; io.appendChild(o); });
+    if (ioPrev) io.value = ioPrev;
+    if (!io.value) io.selectedIndex = 0;
+
+    // resumen de origen
+    var origs = origenesDelMes(currentMonth);
+    var totEntra = 0, totUsado = 0;
+    var html = origs.map(function(o){
+      totUsado += o.usado;
+      if (o.entra == null){
+        if (!o.usado) return "";
+        return '<div class="origen-row"><span class="name">De la cuenta</span><span class="nums">usado ' + fmtEur(o.usado) + '</span></div>';
+      }
+      if (!o.entra && !o.usado) return "";
+      totEntra += o.entra;
+      var libre = o.entra - o.usado, pct = o.entra > 0 ? clamp(o.usado / o.entra * 100, 0, 100) : 100;
+      return '<div class="origen-row"><span class="name">' + escapeHtml(origenLabel(o.key)) + '</span>' +
+        '<span class="nums">entra ' + fmtEur(o.entra) + ' · ahorrado ' + fmtEur(o.usado) + '</span>' +
+        '<span class="left" style="color:' + (libre < 0 ? "var(--crit)" : "var(--ink)") + '">quedan ' + fmtEur(libre) + '</span>' +
+        '<div class="origen-bar"><div style="width:' + pct + '%"></div></div></div>';
+    }).join("");
+    if (!html) html = '<div class="empty-note">Añade tus entradas fijas o intereses y, al invertir o ahorrar, elige de dónde sale.</div>';
+    else html += '<div class="origen-total"><span>Entra este mes ' + fmtEur(totEntra) + ' · ahorrado ' + fmtEur(totUsado) + '</span><span>Sin asignar ' + fmtEur(totEntra - (totUsado - usadoDe(ORIGEN_CUENTA, currentMonth))) + '</span></div>';
+    document.getElementById("origenResumen").innerHTML = html;
+
+    fillOrigenSelect(document.getElementById("investOrigen"));
+    fillOrigenSelect(document.getElementById("emergOrigen"));
+  }
+
   function render(){
     renderMonthBar();
     renderHero();
@@ -825,6 +1057,7 @@ body.auth-out header.top { display: none; }
         return '<div class="entry-row">' +
           '<span class="dot" style="background:'+categoryColor(e.categoria)+'"></span>' +
           '<span class="entry-cat"><span class="name">'+escapeHtml(e.categoria)+'</span>' +
+          (e.origen ? '<span class="note"> · de '+escapeHtml(origenLabel(e.origen))+'</span>' : '') +
           (e.nota ? '<span class="note"> · '+escapeHtml(e.nota)+'</span>' : '') + '</span>' +
           '<span class="entry-amt num">'+fmtEur(e.cantidad)+'</span>' +
           '<button class="entry-del" data-del-invest="'+e.id+'" aria-label="Eliminar">✕</button>' +
@@ -898,6 +1131,7 @@ body.auth-out header.top { display: none; }
         return '<div class="entry-row">' +
           '<span class="dot emerg" style="background:var(--emerg)"></span>' +
           '<span class="entry-cat"><span class="name">'+escapeHtml(e.categoria || "Aportación")+'</span>' +
+          (e.origen ? '<span class="note"> · de '+escapeHtml(origenLabel(e.origen))+'</span>' : '') +
           (e.nota ? '<span class="note"> · '+escapeHtml(e.nota)+'</span>' : '') + '</span>' +
           '<span class="entry-amt num">'+fmtEur(e.cantidad)+'</span>' +
           '<button class="entry-del" data-del-emerg="'+e.id+'" aria-label="Eliminar">✕</button>' +
@@ -935,6 +1169,7 @@ body.auth-out header.top { display: none; }
 
     renderTrendChart(months, target);
     renderCumulative();
+    renderMoney();
   }
 
   function renderTrendChart(months, target){
@@ -1195,10 +1430,14 @@ body.auth-out header.top { display: none; }
       showLimitMsg("investLimitMsg", "Eso supera tu objetivo de inversión (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
       return;
     }
+    var origen = document.getElementById("investOrigen").value;
+    var falta = faltaDinero(origen, amt);
+    if (falta){ showLimitMsg("investLimitMsg", falta); return; }
     hideLimitMsg("investLimitMsg");
 
     var note = document.getElementById("investNote").value.trim();
-    state.entries.push({ id: uid(), mes: currentMonth, categoria: cat, cantidad: amt, nota: note, fecha: new Date().toISOString() });
+    aplicarSalidaCuenta(origen, -amt);
+    state.entries.push({ id: uid(), mes: currentMonth, categoria: cat, cantidad: amt, nota: note, origen: origen, fecha: new Date().toISOString() });
     saveState();
     amtInput.value = ""; document.getElementById("investNote").value = "";
     renderInvestCard(); renderHero(); renderHistory();
@@ -1217,10 +1456,14 @@ body.auth-out header.top { display: none; }
       showLimitMsg("emergLimitMsg", "Eso supera tu objetivo de fondo (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
       return;
     }
+    var origen = document.getElementById("emergOrigen").value;
+    var falta = faltaDinero(origen, amt);
+    if (falta){ showLimitMsg("emergLimitMsg", falta); return; }
     hideLimitMsg("emergLimitMsg");
 
     var note = document.getElementById("emergNote").value.trim();
-    state.emergEntries.push({ id: uid(), mes: currentMonth, categoria: fondoCatSeleccionada(), cantidad: amt, nota: note, fecha: new Date().toISOString() });
+    aplicarSalidaCuenta(origen, -amt);
+    state.emergEntries.push({ id: uid(), mes: currentMonth, categoria: fondoCatSeleccionada(), cantidad: amt, nota: note, origen: origen, fecha: new Date().toISOString() });
     saveState();
     amtInput.value = ""; document.getElementById("emergNote").value = "";
     renderEmergCard(); renderHistory();
@@ -1229,12 +1472,14 @@ body.auth-out header.top { display: none; }
   document.getElementById("investEntries").addEventListener("click", function(e){
     var id = e.target.getAttribute("data-del-invest");
     if (!id) return;
+    state.entries.forEach(function(x){ if (x.id === id) aplicarSalidaCuenta(x.origen, x.cantidad); });
     state.entries = state.entries.filter(function(x){ return x.id !== id; });
     saveState(); renderInvestCard(); renderHero(); renderHistory();
   });
   document.getElementById("emergEntries").addEventListener("click", function(e){
     var id = e.target.getAttribute("data-del-emerg");
     if (!id) return;
+    state.emergEntries.forEach(function(x){ if (x.id === id) aplicarSalidaCuenta(x.origen, x.cantidad); });
     state.emergEntries = state.emergEntries.filter(function(x){ return x.id !== id; });
     saveState(); renderEmergCard(); renderHistory();
   });
@@ -1349,6 +1594,63 @@ body.auth-out header.top { display: none; }
         fondoScope = b.getAttribute("data-fscope");
         renderFondoBreakdown();
       });
+    });
+    // ---- Tu dinero ----
+    document.getElementById("saldoInput").addEventListener("input", function(){
+      var v = this.value === "" ? null : parseFloat(this.value);
+      if (v != null && (isNaN(v) || v < 0)) return;
+      state.saldoCuenta = v;
+      saveState(); renderMoney();
+    });
+    document.getElementById("invValues").addEventListener("change", function(e){
+      var cat = e.target.getAttribute("data-valor-cat");
+      if (!cat) return;
+      var v = parseFloat(e.target.value);
+      if (isNaN(v) || v < 0) return;
+      state.valorInversiones = state.valorInversiones || {};
+      state.valorInversiones[cat] = { valor: v, base: investHolding(cat), fecha: new Date().toISOString() };
+      saveState(); e.target.blur(); renderMoney();
+    });
+    document.getElementById("invValues").addEventListener("keydown", function(e){
+      if (e.key === "Enter" && e.target.getAttribute("data-valor-cat")) e.target.blur();
+    });
+    document.getElementById("invValues").addEventListener("focusout", function(){ setTimeout(renderMoney, 0); });
+    document.getElementById("fijaForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var nombre = document.getElementById("fijaNombre").value.trim() || "Nómina";
+      var amt = parseFloat(document.getElementById("fijaAmt").value);
+      if (isNaN(amt) || amt <= 0) return;
+      state.entradasFijas = state.entradasFijas || [];
+      state.entradasFijas.push({ id: uid(), nombre: nombre, cantidad: amt, desde: currentMonth, hasta: null });
+      document.getElementById("fijaNombre").value = ""; document.getElementById("fijaAmt").value = "";
+      saveState(); renderMoney();
+    });
+    document.getElementById("fijasList").addEventListener("click", function(e){
+      var id = e.target.getAttribute("data-del-fija");
+      if (!id) return;
+      var f = (state.entradasFijas || []).filter(function(x){ return x.id === id; })[0];
+      if (!f) return;
+      pedirConfirmacion(f.nombre, function(){
+        // Deja de contar desde este mes; los meses anteriores se conservan
+        if (f.desde >= currentMonth) state.entradasFijas = state.entradasFijas.filter(function(x){ return x.id !== id; });
+        else f.hasta = addMonths(currentMonth, -1);
+        saveState(); renderMoney();
+      });
+    });
+    document.getElementById("interesForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var amt = parseFloat(document.getElementById("interesAmt").value);
+      if (isNaN(amt) || amt <= 0) return;
+      state.intereses = state.intereses || [];
+      state.intereses.push({ id: uid(), mes: currentMonth, origen: document.getElementById("interesOrigen").value, cantidad: amt, nota: document.getElementById("interesNote").value.trim(), fecha: new Date().toISOString() });
+      document.getElementById("interesAmt").value = ""; document.getElementById("interesNote").value = "";
+      saveState(); renderMoney();
+    });
+    document.getElementById("interesesList").addEventListener("click", function(e){
+      var id = e.target.getAttribute("data-del-interes");
+      if (!id) return;
+      state.intereses = (state.intereses || []).filter(function(x){ return x.id !== id; });
+      saveState(); renderMoney();
     });
     document.getElementById("exportBtn").addEventListener("click", function(){
     var json = JSON.stringify(state, null, 2);
@@ -1520,6 +1822,30 @@ body.auth-out header.top { display: none; }
   // español: [italiano, inglés]
   var T = {
     "Libro de Ahorro": ["Libro dei Risparmi", "Savings Book"],
+    "Tu dinero hoy": ["I tuoi soldi oggi", "Your money today"],
+    "Cuenta": ["Conto", "Account"],
+    "Inversiones (valor actual)": ["Investimenti (valore attuale)", "Investments (current value)"],
+    "Saldo en la cuenta": ["Saldo sul conto", "Account balance"],
+    "Dinero en tu cuenta ahora": ["Soldi sul tuo conto adesso", "Money in your account now"],
+    "Se descuenta solo cuando inviertes o ahorras «de la cuenta».": ["Si scala da solo quando investi o risparmi «dal conto».", "It goes down automatically when you invest or save «from the account»."],
+    "Valor actual de tus inversiones": ["Valore attuale dei tuoi investimenti", "Current value of your investments"],
+    "Escribe cuánto valen hoy. El valor se mantiene los meses siguientes hasta que lo cambies; si aportas más, se suma solo.": ["Scrivi quanto valgono oggi. Il valore resta nei mesi successivi finché non lo cambi; se versi di più, si somma da solo.", "Enter what they're worth today. The value carries over to the next months until you change it; new contributions are added automatically."],
+    "Entradas fijas": ["Entrate fisse", "Fixed income"],
+    "(se repiten cada mes)": ["(si ripetono ogni mese)", "(repeat every month)"],
+    "Intereses": ["Interessi", "Interest"],
+    "(este mes)": ["(questo mese)", "(this month)"],
+    "¿De dónde sale el dinero este mes?": ["Da dove escono i soldi questo mese?", "Where does the money come from this month?"],
+    "Nómina": ["Stipendio", "Salary"],
+    "€/mes": ["€/mese", "€/month"],
+    "¿De dónde vienen?": ["Da dove arrivano?", "Where do they come from?"],
+    "¿De dónde sale el dinero?": ["Da dove escono i soldi?", "Where does the money come from?"],
+    "Cuando añadas una inversión podrás escribir aquí cuánto vale hoy.": ["Quando aggiungi un investimento potrai scrivere qui quanto vale oggi.", "Once you add an investment you can enter its current value here."],
+    "Añade tu nómina u otras entradas que recibes cada mes.": ["Aggiungi lo stipendio o altre entrate che ricevi ogni mese.", "Add your salary or other income you receive every month."],
+    "Sin intereses este mes.": ["Nessun interesse questo mese.", "No interest this month."],
+    "Añade tus entradas fijas o intereses y, al invertir o ahorrar, elige de dónde sale.": ["Aggiungi entrate fisse o interessi e, quando investi o risparmi, scegli da dove escono.", "Add your fixed income or interest and, when you invest or save, choose where it comes from."],
+    "De la cuenta": ["Dal conto", "From the account"],
+    "Alquiler cobrado": ["Affitto incassato", "Rent received"],
+    "Pensión": ["Pensione", "Pension"],
     "Tú decides cuánto ahorras cada mes y cómo lo repartes.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo.", "You decide how much to save each month and how to split it."],
     "Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo tra investimenti e fondo.", "You decide how much to save each month and how to split it between investments and fund."],
     "guardado en tu cuenta": ["salvato nel tuo account", "saved to your account"],
@@ -1631,6 +1957,20 @@ body.auth-out header.top { display: none; }
   ];
   var ABR = { ENE:["GEN","JAN"], FEB:["FEB","FEB"], MAR:["MAR","MAR"], ABR:["APR","APR"], MAY:["MAG","MAY"], JUN:["GIU","JUN"], JUL:["LUG","JUL"], AGO:["AGO","AUG"], SEP:["SET","SEP"], OCT:["OTT","OCT"], NOV:["NOV","NOV"], DIC:["DIC","DEC"] };
   var RULES = [
+    [/^Sale de: la cuenta(.*)$/, ["Esce da: conto$1", "From: account$1"]],
+    [/^Sale de: Intereses(.*)$/, ["Esce da: interessi$1", "From: interest$1"]],
+    [/^Sale de: (.+)$/, ["Esce da: $1", "From: $1"]],
+    [/^· de la cuenta$/, ["· dal conto", "· from the account"]],
+    [/^· de (.+)$/, ["· da $1", "· from $1"]],
+    [/^· desde (.+)$/, ["· da $1", "· since $1"]],
+    [/^· aportado (.+)$/, ["· versato $1", "· contributed $1"]],
+    [/^entra (.+) · ahorrado (.+)$/, ["entra $1 · risparmiato $2", "in $1 · saved $2"]],
+    [/^quedan (.+)$/, ["restano $1", "left $1"]],
+    [/^usado (.+)$/, ["usato $1", "used $1"]],
+    [/^Entra este mes (.+) · ahorrado (.+)$/, ["Entra questo mese $1 · risparmiato $2", "In this month $1 · saved $2"]],
+    [/^Sin asignar (.+)$/, ["Non assegnato $1", "Unassigned $1"]],
+    [/^En la cuenta solo tienes (.+)\.$/, ["Sul conto hai solo $1.", "You only have $1 in the account."]],
+    [/^De (.+) solo te quedan (.+) este mes\.$/, ["Da $1 ti restano solo $2 questo mese.", "Only $2 left from $1 this month."]],
     [/^objetivo total (.+)\/mes$/, ["obiettivo totale $1/mese", "total target $1/month"]],
     [/^objetivo (.+)$/, ["obiettivo $1", "target $1"]],
     [/^Eso supera tu objetivo de inversión \((.+)\)\. Te quedan (.+) libres este mes\.$/, ["Supera il tuo obiettivo di investimento ($1). Ti restano $2 liberi questo mese.", "That's over your investment target ($1). You have $2 left this month."]],
