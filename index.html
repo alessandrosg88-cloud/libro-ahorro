@@ -365,6 +365,21 @@ body.auth-out header.top { display: none; }
   .origen-total { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; padding-top: 6px; border-top: 1px solid var(--line-soft); }
   form.add-row select.origen-sel { flex: 1 1 100%; }
 
+  /* ---- plegables ---- */
+  .grid2 { align-items: start; }
+  .fold-head { cursor: pointer; user-select: none; border-radius: 10px; }
+  .fold-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .fold-arrow { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-soft); transition: transform .18s ease; flex-shrink: 0; }
+  .fold:not(.collapsed) .fold-arrow, .charts-toggle[aria-expanded="true"] .fold-arrow { transform: rotate(90deg); }
+  .card.fold.collapsed > :not(.card-head) { display: none !important; }
+  .card.fold .card-target { font-family: "IBM Plex Mono", monospace; font-size: 0.95rem; font-weight: 600; color: var(--ink); }
+  .charts-toggle { flex-direction: row; align-items: center; gap: 14px; cursor: pointer; text-align: left; font-family: inherit; color: var(--ink); width: 100%; }
+  .charts-toggle:hover { background: var(--surface-2); }
+  .ct-icon { font-size: 1.6rem; }
+  .ct-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .ct-text b { font-family: "Fraunces", serif; font-size: 1.05rem; }
+  .ct-text span { font-size: 0.8rem; color: var(--ink-mute); }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
@@ -481,7 +496,7 @@ body.auth-out header.top { display: none; }
     </div>
   </section>
 
-  <section class="hero">
+  <section class="hero" id="goalSection" hidden>
     <div class="hero-top">
       <div>
         <div class="hero-title">Objetivo de ahorro mensual</div>
@@ -509,13 +524,13 @@ body.auth-out header.top { display: none; }
   <div class="grid2">
 
     <!-- INVESTMENT CARD -->
-    <div class="card">
-      <div class="card-head">
-        <h2><span class="swatch" style="background:var(--accent)"></span>Inversión</h2>
-        <span class="card-target num" id="investTargetLabel">objetivo 0 €</span>
+    <div class="card fold collapsed" id="investCard">
+      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
+        <h2><span class="fold-arrow" aria-hidden="true">▸</span><span class="swatch" style="background:var(--accent)"></span>Inversión</h2>
+        <span class="card-target num" id="investTargetLabel">0 €</span>
       </div>
 
-      <div class="progress-wrap">
+      <div class="progress-wrap" hidden>
         <div class="progress-track"><div class="progress-fill invest" id="investProgressFill"></div></div>
         <div class="progress-nums"><b class="num" id="investProgressText">0 € / 0 €</b><span id="investProgressPct">0%</span></div>
       </div>
@@ -558,13 +573,13 @@ body.auth-out header.top { display: none; }
     </div>
 
     <!-- EMERGENCY CARD -->
-    <div class="card">
-      <div class="card-head">
-        <h2><span class="swatch" style="background:var(--emerg)"></span>Fondo</h2>
-        <span class="card-target num" id="emergTargetLabel">objetivo 0 €</span>
+    <div class="card fold collapsed" id="emergCard">
+      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
+        <h2><span class="fold-arrow" aria-hidden="true">▸</span><span class="swatch" style="background:var(--emerg)"></span>Fondo</h2>
+        <span class="card-target num" id="emergTargetLabel">0 €</span>
       </div>
 
-      <div class="progress-wrap">
+      <div class="progress-wrap" hidden>
         <div class="progress-track"><div class="progress-fill emerg" id="emergProgressFill"></div></div>
         <div class="progress-nums"><b class="num" id="emergProgressText">0 € / 0 €</b><span id="emergProgressPct">0%</span></div>
       </div>
@@ -608,11 +623,18 @@ body.auth-out header.top { display: none; }
       </div>
     </div>
 
+    <!-- GRÁFICOS -->
+    <button type="button" class="card wide charts-toggle" id="chartsToggle" aria-expanded="false">
+      <span class="ct-icon" aria-hidden="true">📊</span>
+      <span class="ct-text"><b>Ver gráficos</b><span>Historial mensual y total ahorrado acumulado</span></span>
+      <span class="fold-arrow" aria-hidden="true">▸</span>
+    </button>
+
     <!-- HISTORY -->
-    <div class="card wide">
+    <div class="card wide chart-card" id="chartsStart" hidden>
       <div class="card-head">
         <h2>Historial mensual</h2>
-        <span class="card-target" id="historyTargetLabel">objetivo total 0 €/mes</span>
+        <span class="card-target" id="historyTargetLabel" hidden></span>
       </div>
 
       <div class="chart-wrap">
@@ -622,7 +644,7 @@ body.auth-out header.top { display: none; }
       <div class="table-wrap">
         <table class="history">
           <thead>
-            <tr><th>Mes</th><th class="num">Inversión</th><th class="num">Fondo</th><th class="num">Total</th><th>Estado</th></tr>
+            <tr><th>Mes</th><th class="num">Inversión</th><th class="num">Fondo</th><th class="num">Total</th></tr>
           </thead>
           <tbody id="historyBody"></tbody>
         </table>
@@ -630,7 +652,7 @@ body.auth-out header.top { display: none; }
     </div>
 
     <!-- TOTAL ACUMULADO -->
-    <div class="card wide">
+    <div class="card wide chart-card" hidden>
       <div class="card-head">
         <h2>Total ahorrado acumulado</h2>
         <span class="card-target num" id="cumTotalLabel">0 €</span>
@@ -895,7 +917,10 @@ body.auth-out header.top { display: none; }
       sel.appendChild(op);
     });
     var keys = Array.prototype.map.call(sel.options, function(x){ return x.value; });
-    if (keys.indexOf(prev) >= 0) sel.value = prev;
+    // Mantiene lo que eligió la persona; si no eligió nada, usa la primera entrada con dinero
+    if (sel.dataset.elegido === "1" && keys.indexOf(prev) >= 0) sel.value = prev;
+    else sel.selectedIndex = 0;
+    if (!sel.dataset.escucha){ sel.dataset.escucha = "1"; sel.addEventListener("change", function(){ sel.dataset.elegido = "1"; }); }
   }
 
   function renderMoney(){
@@ -904,6 +929,8 @@ body.auth-out header.top { display: none; }
     document.getElementById("moneyCuenta").textContent = fmtEur(cuenta);
     document.getElementById("moneyInv").textContent = fmtEur(inv);
     document.getElementById("moneyFondo").textContent = fmtEur(fondo);
+    document.getElementById("investTargetLabel").textContent = fmtEur(inv);
+    document.getElementById("emergTargetLabel").textContent = fmtEur(fondo);
     var aportado = catsConInversion().reduce(function(a, c){ return a + investHolding(c); }, 0);
     var g = inv - aportado, gEl = document.getElementById("moneyInvGain");
     gEl.textContent = Math.round(g) === 0 ? "" : (g > 0 ? "+" : "−") + fmtEur(Math.abs(g));
@@ -1016,8 +1043,7 @@ body.auth-out header.top { display: none; }
         '<div class="split-seg emerg" style="flex-basis:'+emergPct+'%">'+(emergPct>14?fmtEur(emerg):'')+'</div>';
     }
 
-    document.getElementById("investTargetLabel").textContent = "objetivo " + fmtEur(invest);
-    document.getElementById("emergTargetLabel").textContent = "objetivo " + fmtEur(emerg);
+
     document.getElementById("historyTargetLabel").textContent = "objetivo total " + fmtEur(state.totalMensual) + "/mes";
   }
 
@@ -1151,7 +1177,7 @@ body.auth-out header.top { display: none; }
 
   function renderHistory(){
     var months = allMonthsWithData().slice(-12); // last 12 with data / current
-    var target = state.totalMensual;
+    var target = 0; // ya no hay objetivo mensual
 
     // table
     var body = document.getElementById("historyBody");
@@ -1163,7 +1189,6 @@ body.auth-out header.top { display: none; }
         '<td class="num">'+fmtEur(inv)+'</td>' +
         '<td class="num">'+fmtEur(em)+'</td>' +
         '<td class="num"><b>'+fmtEur(tot)+'</b></td>' +
-        '<td><span class="tag '+(ok?"ok":"under")+'">'+(ok?"cumplido":"por debajo")+'</span></td>' +
         '</tr>';
     }).join("");
 
@@ -1423,13 +1448,6 @@ body.auth-out header.top { display: none; }
     var amt = parseFloat(amtInput.value);
     if (isNaN(amt) || amt <= 0) return;
 
-    var target = currentInvestObjetivo();
-    var used = investTotalMonth(currentMonth);
-    var remaining = Math.max(0, target - used);
-    if (amt > remaining){
-      showLimitMsg("investLimitMsg", "Eso supera tu objetivo de inversión (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
-      return;
-    }
     var origen = document.getElementById("investOrigen").value;
     var falta = faltaDinero(origen, amt);
     if (falta){ showLimitMsg("investLimitMsg", falta); return; }
@@ -1449,13 +1467,6 @@ body.auth-out header.top { display: none; }
     var amt = parseFloat(amtInput.value);
     if (isNaN(amt) || amt <= 0) return;
 
-    var target = currentEmergObjetivo();
-    var used = emergTotalMonth(currentMonth);
-    var remaining = Math.max(0, target - used);
-    if (amt > remaining){
-      showLimitMsg("emergLimitMsg", "Eso supera tu objetivo de fondo (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
-      return;
-    }
     var origen = document.getElementById("emergOrigen").value;
     var falta = faltaDinero(origen, amt);
     if (falta){ showLimitMsg("emergLimitMsg", falta); return; }
@@ -1595,6 +1606,33 @@ body.auth-out header.top { display: none; }
         renderFondoBreakdown();
       });
     });
+    // ---- Plegables: Inversión, Fondo y Gráficos ----
+    function prefGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+    function prefSet(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+    document.querySelectorAll(".card.fold").forEach(function(card){
+      var head = card.querySelector(".fold-head");
+      var key = "libroFold-" + card.id;
+      function set(open){
+        card.classList.toggle("collapsed", !open);
+        head.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      set(prefGet(key) === "open");
+      function toggle(){ var open = card.classList.contains("collapsed"); set(open); prefSet(key, open ? "open" : "closed"); }
+      head.addEventListener("click", toggle);
+      head.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); toggle(); } });
+    });
+    (function(){
+      var btn = document.getElementById("chartsToggle");
+      var label = btn.querySelector(".ct-text b");
+      function set(open, scroll){
+        document.querySelectorAll(".chart-card").forEach(function(c){ c.hidden = !open; });
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        label.textContent = open ? "Ocultar gráficos" : "Ver gráficos";
+        if (open){ renderHistory(); if (scroll) document.getElementById("chartsStart").scrollIntoView({ behavior: "smooth", block: "start" }); }
+      }
+      set(false, false);
+      btn.addEventListener("click", function(){ set(btn.getAttribute("aria-expanded") !== "true", true); });
+    })();
     // ---- Tu dinero ----
     document.getElementById("saldoInput").addEventListener("input", function(){
       var v = this.value === "" ? null : parseFloat(this.value);
@@ -1847,6 +1885,9 @@ body.auth-out header.top { display: none; }
     "Alquiler cobrado": ["Affitto incassato", "Rent received"],
     "Pensión": ["Pensione", "Pension"],
     "la cuenta": ["il conto", "the account"],
+    "Ver gráficos": ["Vedi grafici", "View charts"],
+    "Ocultar gráficos": ["Nascondi grafici", "Hide charts"],
+    "Historial mensual y total ahorrado acumulado": ["Storico mensile e totale risparmiato accumulato", "Monthly history and total saved so far"],
     "Tú decides cuánto ahorras cada mes y cómo lo repartes.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo.", "You decide how much to save each month and how to split it."],
     "Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo tra investimenti e fondo.", "You decide how much to save each month and how to split it between investments and fund."],
     "guardado en tu cuenta": ["salvato nel tuo account", "saved to your account"],
