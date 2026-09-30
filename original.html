@@ -1,0 +1,1846 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root{color-scheme:light}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none !important}</style>
+<title>Libro de Ahorro</title>
+</head>
+<body>
+<link href="fonts.css" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f2f1e9;
+    --page-edge: #e9e7db;
+    --surface: #fffefa;
+    --surface-2: #faf9f2;
+    --ink: #16211c;
+    --ink-soft: #4b5750;
+    --ink-mute: #8b9189;
+    --line: rgba(22,33,28,0.13);
+    --line-soft: rgba(22,33,28,0.07);
+    --accent: #1f5c4d;
+    --accent-ink: #ffffff;
+    --accent-soft: #dfeae5;
+    --emerg: #a5661f;
+    --emerg-soft: #f3e4d2;
+    --good: #0ca30c;
+    --warn: #c9560c;
+    --crit: #b3261e;
+    --shadow: 0 1px 2px rgba(22,33,28,0.06), 0 8px 24px -12px rgba(22,33,28,0.18);
+    --cat-1: #2a78d6;
+    --cat-2: #eb6834;
+    --cat-3: #1baf7a;
+    --cat-4: #eda100;
+    --cat-5: #e87ba4;
+    --cat-6: #008300;
+    --cat-7: #4a3aa7;
+    --cat-8: #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #121815;
+      --page-edge: #0c100e;
+      --surface: #1a211d;
+      --surface-2: #202722;
+      --ink: #f3f2ec;
+      --ink-soft: #c3cac2;
+      --ink-mute: #8b9189;
+      --line: rgba(243,242,236,0.13);
+      --line-soft: rgba(243,242,236,0.07);
+      --accent: #4fb89b;
+      --accent-ink: #08211a;
+      --accent-soft: #1e3a32;
+      --emerg: #e0a24c;
+      --emerg-soft: #3a2d18;
+      --good: #4fd44f;
+      --warn: #f0985a;
+      --crit: #ef6b64;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.45);
+      --cat-1: #3987e5;
+      --cat-2: #d95926;
+      --cat-3: #199e70;
+      --cat-4: #c98500;
+      --cat-5: #d55181;
+      --cat-6: #3fbf3f;
+      --cat-7: #9085e9;
+      --cat-8: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #121815;
+    --page-edge: #0c100e;
+    --surface: #1a211d;
+    --surface-2: #202722;
+    --ink: #f3f2ec;
+    --ink-soft: #c3cac2;
+    --ink-mute: #8b9189;
+    --line: rgba(243,242,236,0.13);
+    --line-soft: rgba(243,242,236,0.07);
+    --accent: #4fb89b;
+    --accent-ink: #08211a;
+    --accent-soft: #1e3a32;
+    --emerg: #e0a24c;
+    --emerg-soft: #3a2d18;
+    --good: #4fd44f;
+    --warn: #f0985a;
+    --crit: #ef6b64;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.45);
+    --cat-1: #3987e5;
+    --cat-2: #d95926;
+    --cat-3: #199e70;
+    --cat-4: #c98500;
+    --cat-5: #d55181;
+    --cat-6: #3fbf3f;
+    --cat-7: #9085e9;
+    --cat-8: #e66767;
+  }
+
+  * { box-sizing: border-box; }
+/* Ventas, retiros y total acumulado */
+.out-toggle { align-self: flex-start; font-size: 0.78rem; }
+.out-row button[type="submit"] { background: var(--crit) !important; color: #fff !important; }
+.entry-row.venta .name { color: var(--crit); }
+.cum-summary { display: flex; flex-wrap: wrap; gap: 18px; font-size: 0.85rem; color: var(--ink-soft); }
+.cum-summary .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.cum-summary b { color: var(--ink); margin-left: 4px; }
+.cum-note { font-size: 0.75rem; color: var(--ink-mute); margin: 0; }
+.cat-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.75rem; color: var(--ink-mute); }
+.cat-chip { display: inline-flex; align-items: center; gap: 2px; background: var(--emerg-soft); color: var(--ink); border-radius: 999px; padding: 3px 4px 3px 10px; }
+.cat-chip button { background: none; border: 0; color: var(--ink-mute); cursor: pointer; font-size: 0.72rem; padding: 0 5px; line-height: 1; }
+.cat-chip button:hover { color: var(--crit); }
+.modal-back { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 16px; }
+.modal-box { background: var(--surface); color: var(--ink); border-radius: 14px; padding: 20px; max-width: 360px; width: 100%; box-shadow: var(--shadow); }
+.modal-title { font-weight: 600; margin: 0 0 6px; font-size: 1rem; }
+.modal-sub { margin: 0 0 16px; font-size: 0.82rem; color: var(--ink-mute); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.modal-danger { background: var(--crit); color: #fff; border: 0; border-radius: 9px; padding: 8px 14px; font-family: inherit; font-weight: 600; cursor: pointer; }
+.fscope-toggle { display: flex; gap: 6px; font-size: 0.75rem; }
+.fscope-toggle button { font-family: inherit; font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink-soft); cursor: pointer; }
+.fscope-toggle button.active { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 600; }
+/* Portada de inicio de sesión */
+.auth-cover { min-height: calc(100vh - 120px); display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: center; }
+.auth-hero .brand h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); }
+.auth-hero .mark { font-size: 2.4rem; }
+.auth-lead { font-size: 1.1rem; color: var(--ink-soft); margin: 14px 0 22px; max-width: 34ch; line-height: 1.5; }
+.auth-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; font-weight: 500; }
+.auth-points li::before { content: "✓"; color: var(--accent); font-weight: 700; margin-right: 10px; }
+.auth-card { max-width: 400px; width: 100%; justify-self: end; }
+.link-btn { background: none; border: 0; padding: 4px 0 0; color: var(--accent); font-family: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; align-self: center; }
+.link-btn:hover { text-decoration: underline; }
+body.auth-out header.top { display: none; }
+@media (max-width: 720px) { .auth-cover { grid-template-columns: 1fr; min-height: auto; gap: 24px; } .auth-card { justify-self: stretch; max-width: none; } }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page-edge);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sheet {
+    max-width: 920px;
+    margin: 0 auto;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 28px 20px 64px;
+  }
+  @media (min-width: 640px) {
+    .sheet { padding: 44px 40px 80px; }
+  }
+
+  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; margin: 0; font-weight: 600; text-wrap: balance; }
+  .num { font-family: "IBM Plex Mono", "Courier New", monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---- header ---- */
+  header.top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand h1 { font-size: 1.5rem; letter-spacing: -0.01em; }
+  .brand .mark { font-size: 1.5rem; }
+  .top-sub { color: var(--ink-mute); font-size: 0.85rem; margin: 4px 0 0; }
+  .theme-note { font-size: 0.75rem; color: var(--ink-mute); text-align: right; max-width: 240px; line-height: 1.4; }
+  .sync-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; background: var(--ink-mute); }
+  .sync-dot.on { background: var(--good); }
+
+  /* ---- month switcher ---- */
+  .month-bar {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    margin-bottom: 26px;
+  }
+  .month-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .month-btn:hover { background: var(--surface-2); }
+  .month-label { font-family: "Fraunces", serif; font-size: 1.15rem; font-weight: 600; min-width: 190px; text-align: center; text-transform: capitalize; }
+  .month-today {
+    font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent-soft);
+    background: var(--accent-soft); padding: 3px 9px; border-radius: 20px; cursor: pointer;
+  }
+
+  /* ---- hero split ---- */
+  .hero {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 26px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 22px;
+  }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+  .hero-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-mute); margin-bottom: 6px; }
+  .total-edit { display: flex; align-items: baseline; gap: 8px; }
+  .total-edit input {
+    font-family: "Fraunces", serif; font-size: 2rem; font-weight: 600;
+    width: 130px; border: none; background: transparent; color: var(--ink);
+    border-bottom: 2px dashed var(--line); padding: 0 2px 2px;
+  }
+  .total-edit input:focus { outline: none; border-bottom-color: var(--accent); }
+  .total-edit .eur { font-family: "Fraunces", serif; font-size: 2rem; font-weight: 600; }
+  .total-sub { color: var(--ink-mute); font-size: 0.82rem; }
+
+  .split-visual { display: flex; height: 30px; border-radius: 8px; overflow: hidden; gap: 2px; margin-bottom: 14px; background: var(--surface-2); }
+  .split-seg { display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 600; color: white; transition: flex-basis .18s ease; white-space: nowrap; overflow: hidden; }
+  .split-seg.invest { background: var(--accent); }
+  .split-seg.emerg { background: var(--emerg); }
+
+  .split-slider-row { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .split-slider-row input[type=range] {
+    flex: 1; accent-color: var(--accent); height: 4px; cursor: pointer;
+  }
+  .split-legend { display: flex; justify-content: space-between; font-size: 0.85rem; }
+  .split-legend .lg { display: flex; align-items: center; gap: 7px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot.invest { background: var(--accent); }
+  .dot.emerg { background: var(--emerg); }
+  .split-legend b { font-family: "IBM Plex Mono", monospace; }
+
+  /* ---- cards ---- */
+  .grid2 { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 22px; }
+  @media (min-width: 760px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+    padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 16px;
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .card-head h2 { font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+  .card-head .swatch { width: 11px; height: 11px; border-radius: 3px; }
+  .card-target { font-size: 0.78rem; color: var(--ink-mute); }
+
+  .progress-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .progress-track { height: 10px; background: var(--surface-2); border-radius: 20px; overflow: hidden; border: 1px solid var(--line-soft); }
+  .progress-fill { height: 100%; border-radius: 20px; transition: width .25s ease; }
+  .progress-fill.invest { background: var(--accent); }
+  .progress-fill.emerg { background: var(--emerg); }
+  .progress-fill.over { background: var(--warn); }
+  .progress-nums { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--ink-soft); }
+  .progress-nums b { color: var(--ink); }
+
+  .fund-total { display: flex; align-items: baseline; gap: 8px; padding: 10px 0 2px; border-top: 1px dashed var(--line); margin-top: 2px; }
+  .fund-total .n { font-family: "Fraunces", serif; font-size: 1.6rem; font-weight: 600; }
+  .fund-total .l { font-size: 0.78rem; color: var(--ink-mute); }
+
+  form.add-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  form.add-row select, form.add-row input[type=number], form.add-row input[type=text] {
+    font-family: inherit; font-size: 0.85rem; padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 9px; background: var(--surface-2); color: var(--ink);
+  }
+  form.add-row select { flex: 1 1 110px; min-width: 100px; }
+  form.add-row input[type=number] { width: 90px; }
+  form.add-row input[type=text] { flex: 1 1 100px; }
+  form.add-row button {
+    font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 14px;
+    border: none; border-radius: 9px; background: var(--accent); color: var(--accent-ink); cursor: pointer;
+  }
+  form.add-row.emerg button { background: var(--emerg); }
+  form.add-row button:hover { filter: brightness(1.06); }
+  .new-cat-row { display: none; gap: 8px; }
+  .new-cat-row.show { display: flex; }
+
+  .entries-list { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--line-soft); }
+  .entry-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line-soft); font-size: 0.85rem; }
+  .entry-row .dot { flex-shrink: 0; }
+  .entry-cat { flex: 1; min-width: 0; }
+  .entry-cat .name { font-weight: 500; }
+  .entry-cat .note { color: var(--ink-mute); font-size: 0.78rem; }
+  .entry-amt { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  .entry-del { background: none; border: none; color: var(--ink-mute); cursor: pointer; font-size: 0.95rem; padding: 2px 4px; line-height: 1; }
+  .entry-del:hover { color: var(--crit); }
+  .empty-note { color: var(--ink-mute); font-size: 0.83rem; font-style: italic; padding: 4px 0; }
+  .limit-msg { font-size: 0.8rem; color: var(--crit); background: var(--emerg-soft); border: 1px solid var(--emerg-soft); border-radius: 9px; padding: 8px 11px; line-height: 1.4; }
+
+  /* category breakdown bar */
+  .breakdown-toggle { display: flex; gap: 6px; font-size: 0.75rem; }
+  .breakdown-toggle button {
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-soft);
+    border-radius: 20px; padding: 4px 11px; cursor: pointer; font-family: inherit;
+  }
+  .breakdown-toggle button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-soft); font-weight: 600; }
+  .stack-bar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; gap: 2px; }
+  .stack-seg { min-width: 3px; cursor: default; }
+  .cat-legend { display: flex; flex-direction: column; gap: 7px; }
+  .cat-legend-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; }
+  .cat-legend-row .name { flex: 1; }
+  .cat-legend-row .pct { color: var(--ink-mute); width: 38px; text-align: right; }
+  .cat-legend-row .amt { font-family: "IBM Plex Mono", monospace; width: 62px; text-align: right; }
+
+  /* history */
+  .card.wide { grid-column: 1 / -1; }
+  table.history { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  table.history th, table.history td { text-align: right; padding: 8px 6px; border-bottom: 1px solid var(--line-soft); }
+  table.history th:first-child, table.history td:first-child { text-align: left; }
+  table.history th { color: var(--ink-mute); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  table.history td.num, table.history th.num { font-family: "IBM Plex Mono", monospace; }
+  table.history tr:last-child td { border-bottom: none; }
+  .tag { display: inline-block; font-size: 0.68rem; padding: 1px 7px; border-radius: 20px; font-weight: 600; }
+  .tag.ok { background: var(--accent-soft); color: var(--accent); }
+  .tag.under { background: var(--emerg-soft); color: var(--emerg); }
+  .table-wrap { overflow-x: auto; }
+
+  .chart-wrap { position: relative; }
+  svg.trend text { fill: var(--ink-mute); font-family: "IBM Plex Mono", monospace; font-size: 9px; }
+  svg.trend .gridline { stroke: var(--line-soft); stroke-width: 1; }
+  svg.trend .target-line { stroke: var(--ink-mute); stroke-width: 1.5; stroke-dasharray: 3 3; }
+  .tip {
+    position: fixed; pointer-events: none; background: var(--ink); color: var(--bg);
+    font-size: 0.75rem; padding: 6px 10px; border-radius: 8px; z-index: 50;
+    opacity: 0; transform: translate(-50%, -110%); transition: opacity .1s;
+    font-family: "IBM Plex Sans", sans-serif; white-space: nowrap; box-shadow: var(--shadow);
+  }
+  .tip.show { opacity: 1; }
+  .tip .row { display: flex; gap: 6px; align-items: center; }
+  .tip b { font-family: "IBM Plex Mono", monospace; }
+
+  /* footer / backup */
+  footer.foot {
+    margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .foot-note { font-size: 0.75rem; color: var(--ink-mute); max-width: 480px; line-height: 1.5; }
+  .foot-actions { display: flex; gap: 8px; }
+  .ghost-btn {
+    font-family: inherit; font-size: 0.78rem; padding: 7px 13px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); cursor: pointer;
+  }
+  .ghost-btn:hover { color: var(--ink); background: var(--surface-2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="top">
+    <div>
+      <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
+      <p class="top-sub" id="topSub">Tú decides cuánto ahorras cada mes y cómo lo repartes.</p>
+    </div>
+    <div style="text-align:right">
+      <div class="theme-note"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">cargando…</span></div>
+      <div id="accountBar" style="margin-top:6px;font-size:0.75rem;color:var(--ink-mute);display:flex;gap:8px;align-items:center;justify-content:flex-end" hidden>
+        <span id="accountEmail"></span>
+        <button type="button" id="signOutBtn" class="ghost-btn" style="padding:2px 8px;font-size:0.7rem">Cerrar sesión</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="authGate" class="auth-cover" hidden>
+    <div class="auth-hero">
+      <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
+      <p class="auth-lead">Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.</p>
+      <ul class="auth-points">
+        <li>Fija tu objetivo de ahorro mensual</li>
+        <li>Repártelo entre inversión y fondo</li>
+        <li>Guardado en tu cuenta: entra desde cualquier dispositivo</li>
+      </ul>
+    </div>
+    <div class="card auth-card">
+    <div class="card-head">
+      <h2 id="authHeading">Inicia sesión</h2>
+    </div>
+    <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.</p>
+    <p style="font-size:0.75rem;margin:0;color:var(--ink-mute)">Al crear una cuenta aceptas los términos de uso y la política de privacidad.<br><a href="terminos.html" style="color:var(--accent)">Términos de uso</a> · <a href="privacidad.html" style="color:var(--accent)">Privacidad y cookies</a> · <a href="terminos.html" style="color:var(--accent)">Términos de uso y aviso legal</a></p>
+    <form id="authForm" style="display:flex;flex-direction:column;gap:10px">
+      <input type="email" id="authEmail" placeholder="Correo electrónico" autocomplete="email" required style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
+      <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password" required minlength="6" style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
+      <div style="display:flex;gap:8px">
+        <button type="submit" id="authLoginBtn" style="flex:1;font-family:inherit;font-size:0.85rem;font-weight:600;padding:9px 14px;border:none;border-radius:9px;background:var(--accent);color:var(--accent-ink);cursor:pointer">Iniciar sesión</button>
+        <button type="button" id="authSignupBtn" class="ghost-btn" style="flex:1">Crear cuenta</button>
+      </div>
+      <button type="button" id="forgotBtn" class="link-btn">¿Olvidaste tu contraseña?</button>
+    </form>
+    <form id="newPassForm" hidden style="display:flex;flex-direction:column;gap:10px">
+      <input type="password" id="newPassword" placeholder="Nueva contraseña (mínimo 6 caracteres)" autocomplete="new-password" required minlength="6" style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">
+      <button type="submit" id="newPassSubmit" style="font-family:inherit;font-size:0.85rem;font-weight:600;padding:9px 14px;border:none;border-radius:9px;background:var(--accent);color:var(--accent-ink);cursor:pointer">Guardar nueva contraseña</button>
+    </form>
+    <div id="authMsg" class="limit-msg" hidden></div>
+    </div>
+  </div>
+
+  <div id="appRoot" hidden>
+
+  <div class="month-bar">
+    <button class="month-btn" id="prevMonth" aria-label="Mes anterior">‹</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button class="month-btn" id="nextMonth" aria-label="Mes siguiente">›</button>
+    <button class="month-today" id="gotoToday">hoy</button>
+  </div>
+
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-title">Objetivo de ahorro mensual</div>
+        <div class="total-edit">
+          <span class="eur">€</span><input type="number" id="totalInput" min="0" step="10" value="0">
+        </div>
+        <div class="total-sub">Escribe cuánto quieres ahorrar este mes y ajusta el reparto abajo</div>
+      </div>
+    </div>
+
+    <div class="split-visual" id="splitVisual"></div>
+
+    <div class="split-slider-row">
+      <span style="font-size:0.78rem;color:var(--ink-mute)">0</span>
+      <input type="range" id="splitSlider" min="0" max="0" step="5" value="0">
+      <span style="font-size:0.78rem;color:var(--ink-mute)" id="sliderMax">0</span>
+    </div>
+
+    <div class="split-legend">
+      <span class="lg"><span class="dot invest"></span>Inversión <b class="num" id="investAmtLabel">0 €</b></span>
+      <span class="lg"><span class="dot emerg"></span>Fondo <b class="num" id="emergAmtLabel">0 €</b></span>
+    </div>
+  </section>
+
+  <div class="grid2">
+
+    <!-- INVESTMENT CARD -->
+    <div class="card">
+      <div class="card-head">
+        <h2><span class="swatch" style="background:var(--accent)"></span>Inversión</h2>
+        <span class="card-target num" id="investTargetLabel">objetivo 0 €</span>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill invest" id="investProgressFill"></div></div>
+        <div class="progress-nums"><b class="num" id="investProgressText">0 € / 0 €</b><span id="investProgressPct">0%</span></div>
+      </div>
+
+      <form class="add-row" id="investForm">
+        <select id="investCat"></select>
+        <input type="number" id="investAmt" placeholder="€" min="0" step="1" required>
+        <input type="text" id="investNote" placeholder="nota (opcional)">
+        <button type="submit">Añadir</button>
+      </form>
+      <div class="new-cat-row" id="newCatRow">
+        <input type="text" id="newCatInput" placeholder="nombre de la categoría">
+        <button type="button" class="ghost-btn" id="newCatConfirm">crear</button>
+      </div>
+      <div class="fund-total">
+        <span class="n num" id="investAllTotal">0 €</span>
+        <span class="l">invertido en total (descontando ventas)</span>
+      </div>
+      <button type="button" class="ghost-btn out-toggle" id="sellToggle">− Registrar una venta</button>
+      <form class="add-row out-row" id="sellForm" hidden>
+        <select id="sellCat"></select>
+        <input type="number" id="sellAmt" placeholder="€ vendidos" min="0" step="0.01" required>
+        <input type="text" id="sellNote" placeholder="nota (opcional)">
+        <button type="submit">Vender</button>
+      </form>
+      <div id="sellMsg" class="limit-msg" hidden></div>
+      <div id="investLimitMsg" class="limit-msg" hidden></div>
+
+      <div class="entries-list" id="investEntries"></div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px;border-top:1px dashed var(--line)">
+        <div class="breakdown-toggle">
+          <button type="button" class="active" data-scope="month">este mes</button>
+          <button type="button" data-scope="all">histórico</button>
+        </div>
+        <div class="stack-bar" id="catStackBar"></div>
+        <div class="cat-legend" id="catLegend"></div>
+      </div>
+    </div>
+
+    <!-- EMERGENCY CARD -->
+    <div class="card">
+      <div class="card-head">
+        <h2><span class="swatch" style="background:var(--emerg)"></span>Fondo</h2>
+        <span class="card-target num" id="emergTargetLabel">objetivo 0 €</span>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill emerg" id="emergProgressFill"></div></div>
+        <div class="progress-nums"><b class="num" id="emergProgressText">0 € / 0 €</b><span id="emergProgressPct">0%</span></div>
+      </div>
+
+      <div class="fund-total">
+        <span class="n num" id="emergFundTotal">0 €</span>
+        <span class="l">acumulado en el fondo (todos los meses)</span>
+      </div>
+
+      <form class="add-row emerg" id="emergForm">
+        <select id="emergCat" title="¿En qué lo gastarás?"></select>
+        <input type="number" id="emergAmt" placeholder="€" min="0" step="1" required style="width:110px">
+        <input type="text" id="emergNote" placeholder="nota (opcional)">
+        <button type="submit">Añadir</button>
+      </form>
+      <div class="new-cat-row" id="emergNewCatRow">
+        <input type="text" id="emergNewCatInput" placeholder="¿en qué lo gastarás? (p. ej. Vacaciones)">
+        <button type="button" class="ghost-btn" id="emergNewCatConfirm">crear</button>
+      </div>
+      <div class="cat-chips"><span>Categorías del fondo:</span><span id="fondoCatChips" class="cat-chips"></span></div>
+      <button type="button" class="ghost-btn out-toggle" id="withdrawToggle">− Sacar dinero del fondo</button>
+      <form class="add-row out-row" id="withdrawForm" hidden>
+        <select id="withdrawCat"></select>
+        <input type="number" id="withdrawAmt" placeholder="€" min="0" step="0.01" required>
+        <input type="text" id="withdrawNote" placeholder="nota (opcional)">
+        <button type="submit">Sacar</button>
+      </form>
+      <div id="withdrawMsg" class="limit-msg" hidden></div>
+      <div id="emergLimitMsg" class="limit-msg" hidden></div>
+
+      <div class="entries-list" id="emergEntries"></div>
+      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px;border-top:1px dashed var(--line)">
+        <div class="cat-chips"><span>Registro del fondo por categoría</span></div>
+        <div class="fscope-toggle" id="fondoScopeToggle">
+          <button type="button" data-fscope="month">este mes</button>
+          <button type="button" class="active" data-fscope="all">histórico</button>
+        </div>
+        <div class="stack-bar" id="fondoStackBar"></div>
+        <div class="cat-legend" id="fondoLegend"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="card wide">
+      <div class="card-head">
+        <h2>Historial mensual</h2>
+        <span class="card-target" id="historyTargetLabel">objetivo total 0 €/mes</span>
+      </div>
+
+      <div class="chart-wrap">
+        <svg class="trend" id="trendChart" viewBox="0 0 800 220" style="width:100%;height:auto;display:block"></svg>
+      </div>
+
+      <div class="table-wrap">
+        <table class="history">
+          <thead>
+            <tr><th>Mes</th><th class="num">Inversión</th><th class="num">Fondo</th><th class="num">Total</th><th>Estado</th></tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TOTAL ACUMULADO -->
+    <div class="card wide">
+      <div class="card-head">
+        <h2>Total ahorrado acumulado</h2>
+        <span class="card-target num" id="cumTotalLabel">0 €</span>
+      </div>
+      <div class="cum-summary">
+        <div><span class="dot" style="background:var(--accent)"></span>Inversión <b class="num" id="cumInvest">0 €</b></div>
+        <div><span class="dot" style="background:var(--emerg)"></span>Fondo <b class="num" id="cumFondo">0 €</b></div>
+        <div><span class="dot" style="background:var(--ink)"></span>Total <b class="num" id="cumTotal">0 €</b></div>
+      </div>
+      <div class="chart-wrap">
+        <svg class="trend" id="cumChart" viewBox="0 0 800 220" style="width:100%;height:auto;display:block"></svg>
+      </div>
+      <p class="cum-note">Suma de todo lo que has aportado mes a mes, restando lo que has vendido o sacado del fondo.</p>
+    </div>
+
+  </div>
+
+  <footer class="foot">
+    <p class="foot-note">Tus datos se guardan en tu cuenta. Usa «Exportar copia» para descargar una copia de seguridad en cualquier momento (o para pasarlos a otro dispositivo con «Importar copia»).</p>
+    <div class="foot-actions">
+      <button class="ghost-btn" id="exportBtn">Exportar copia</button>
+      <button class="ghost-btn" id="importBtn">Importar copia</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </div>
+    <p class="foot-note" style="width:100%"><a href="privacidad.html" style="color:var(--accent)">Privacidad y cookies</a></p>
+  </footer>
+
+  </div>
+
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script src="supabase.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "libro-ahorro-v1";
+  var CAT_COLORS = ["--cat-1","--cat-2","--cat-3","--cat-4","--cat-5","--cat-6","--cat-7","--cat-8"];
+  var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function todayMonthKey(){
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+  }
+  function monthKeyToLabel(key){
+    var parts = key.split("-"); var y = parts[0], m = parseInt(parts[1],10)-1;
+    return MESES[m] + " " + y;
+  }
+  function addMonths(key, delta){
+    var parts = key.split("-"); var y = parseInt(parts[0],10), m = parseInt(parts[1],10)-1;
+    var d = new Date(y, m + delta, 1);
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function fmtEur(n){
+    n = Math.round(n);
+    return n.toLocaleString("es-ES") + " €";
+  }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+  // Empieza siempre a cero: nada de objetivos ni reparto predefinidos.
+  // El usuario decide cuánto quiere ahorrar y cómo repartirlo desde cero.
+  function defaultState(){
+    return {
+      totalMensual: 0,
+      investObjetivo: 0,
+      categorias: ["Bitcoin","ETF","Acciones"],
+      entries: [],       // {id, mes, categoria, cantidad, nota, fecha}
+      emergEntries: [],  // {id, mes, categoria, cantidad, nota, fecha}
+      fondoCategorias: ["Imprevistos","Viajes","Coche","Casa","Salud"],
+      ventas: []         // {id, mes, tipo: "invest"|"fondo", categoria, cantidad, nota, fecha}
+    };
+  }
+  function mergeDefaults(data){
+    var def = defaultState();
+    data = data || {};
+    for (var k in def) if (!(k in data)) data[k] = def[k];
+    return data;
+  }
+
+  // ---------- storage: Supabase (per-account), with a localStorage cache ----------
+  var SUPABASE_URL = "https://nhhskvauwdudhojjvodi.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_0EouCOgtpq146qgFsMusDg_bvQh58MI";
+  var SUPABASE_TABLE = "libro_ahorro";
+
+  var sb = null;
+  try {
+    if (window.supabase && window.supabase.createClient) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+  } catch (e) { sb = null; }
+
+  var currentUser = null;
+
+  function loadLocalState(){
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? mergeDefaults(JSON.parse(raw)) : defaultState();
+    } catch(e){ return defaultState(); }
+  }
+  function saveLocalState(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+  }
+  function setSyncStatus(on, label){
+    var dot = document.getElementById("syncDot");
+    var lbl = document.getElementById("syncLabel");
+    if (dot) dot.className = "sync-dot" + (on ? " on" : "");
+    if (lbl) lbl.textContent = label;
+  }
+
+  // Guarda en Supabase (si hay sesión) y siempre deja una copia local de respaldo.
+  function saveState(){
+    saveLocalState();
+    if (sb && currentUser){
+      sb.from(SUPABASE_TABLE)
+        .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() })
+        .then(function(res){
+          if (res.error) { setSyncStatus(false, "sin conexión, guardado local"); }
+          else { setSyncStatus(true, "guardado en tu cuenta"); }
+        });
+    }
+  }
+
+  async function loadStateForUser(user){
+    if (!sb) return loadLocalState();
+    try {
+      var res = await sb.from(SUPABASE_TABLE).select("data").eq("user_id", user.id).maybeSingle();
+      if (res.error) throw res.error;
+      if (res.data && res.data.data) return mergeDefaults(res.data.data);
+      var fresh = defaultState();
+      await sb.from(SUPABASE_TABLE).insert({ user_id: user.id, data: fresh });
+      return fresh;
+    } catch (e) {
+      setSyncStatus(false, "sin conexión, guardado local");
+      return loadLocalState();
+    }
+  }
+
+  var state = defaultState();
+  var currentMonth = todayMonthKey();
+  var breakdownScope = "month";
+
+  // ---------- derived helpers ----------
+  function investEntriesForMonth(mes){ return state.entries.filter(function(e){ return e.mes === mes; }); }
+  function emergEntriesForMonth(mes){ return state.emergEntries.filter(function(e){ return e.mes === mes; }); }
+  function sum(arr, key){ return arr.reduce(function(a,b){ return a + (b[key]||0); }, 0); }
+
+  function investTotalMonth(mes){ return sum(investEntriesForMonth(mes), "cantidad"); }
+  function emergTotalMonth(mes){ return sum(emergEntriesForMonth(mes), "cantidad"); }
+  function ventasDe(tipo, mes){ return (state.ventas || []).filter(function(v){ return v.tipo === tipo && (!mes || v.mes === mes); }); }
+  function emergFundTotal(){ return sum(state.emergEntries, "cantidad") - sum(ventasDe("fondo"), "cantidad"); }
+  function investHolding(cat){
+    var dentro = sum(state.entries.filter(function(e){ return e.categoria === cat; }), "cantidad");
+    var fuera = sum(ventasDe("invest").filter(function(v){ return v.categoria === cat; }), "cantidad");
+    return dentro - fuera;
+  }
+  function investTotalAll(){ return sum(state.entries, "cantidad") - sum(ventasDe("invest"), "cantidad"); }
+  function fillSelect(sel, items, withNew, emptyText){
+    var prev = sel.value;
+    sel.innerHTML = "";
+    items.forEach(function(c){ var o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o); });
+    if (!items.length && emptyText){ var e = document.createElement("option"); e.value = ""; e.textContent = emptyText; sel.appendChild(e); }
+    if (withNew){ var o2 = document.createElement("option"); o2.value = "__nueva__"; o2.textContent = "+ nueva categoría"; sel.appendChild(o2); }
+    if (items.indexOf(prev) >= 0) sel.value = prev;
+  }
+  function ventaRow(v){
+    return '<div class="entry-row venta">' +
+      '<span class="dot" style="background:var(--crit)"></span>' +
+      '<span class="entry-cat"><span class="name">' + (v.tipo === "invest" ? "Venta" : "Retiro") + ' · ' + escapeHtml(v.categoria || "") + '</span>' +
+      (v.nota ? '<span class="note"> · ' + escapeHtml(v.nota) + '</span>' : '') + '</span>' +
+      '<span class="entry-amt num" style="color:var(--crit)">−' + fmtEur(v.cantidad) + '</span>' +
+      '<button class="entry-del" data-del-venta="' + v.id + '" aria-label="Eliminar">✕</button>' +
+    '</div>';
+  }
+
+  function categoryColor(cat){
+    var idx = state.categorias.indexOf(cat);
+    if (idx < 0) idx = state.categorias.length;
+    var slot = CAT_COLORS[idx % CAT_COLORS.length];
+    return "var(" + slot + ")";
+  }
+
+  function allMonthsWithData(){
+    var set = {};
+    state.entries.forEach(function(e){ set[e.mes] = true; });
+    state.emergEntries.forEach(function(e){ set[e.mes] = true; });
+    (state.ventas || []).forEach(function(v){ set[v.mes] = true; });
+    set[currentMonth] = true;
+    set[todayMonthKey()] = true;
+    var months = Object.keys(set).sort();
+    return months;
+  }
+
+  // ---------- rendering ----------
+  function render(){
+    renderMonthBar();
+    renderHero();
+    renderInvestCard();
+    renderEmergCard();
+    renderHistory();
+  }
+
+  function renderMonthBar(){
+    document.getElementById("monthLabel").textContent = monthKeyToLabel(currentMonth);
+  }
+
+  function renderHero(){
+    var totalInput = document.getElementById("totalInput");
+    if (document.activeElement !== totalInput) totalInput.value = state.totalMensual;
+
+    var invest = clamp(state.investObjetivo, 0, state.totalMensual);
+    var emerg = state.totalMensual - invest;
+
+    var slider = document.getElementById("splitSlider");
+    slider.max = state.totalMensual;
+    if (document.activeElement !== slider) slider.value = invest;
+    document.getElementById("sliderMax").textContent = state.totalMensual;
+
+    document.getElementById("investAmtLabel").textContent = fmtEur(invest);
+    document.getElementById("emergAmtLabel").textContent = fmtEur(emerg);
+
+    var investPct = state.totalMensual > 0 ? (invest/state.totalMensual*100) : 0;
+    var emergPct = state.totalMensual > 0 ? (100 - investPct) : 0;
+    var visual = document.getElementById("splitVisual");
+    if (state.totalMensual <= 0){
+      visual.innerHTML = '';
+    } else {
+      visual.innerHTML =
+        '<div class="split-seg invest" style="flex-basis:'+investPct+'%">'+(investPct>14?fmtEur(invest):'')+'</div>' +
+        '<div class="split-seg emerg" style="flex-basis:'+emergPct+'%">'+(emergPct>14?fmtEur(emerg):'')+'</div>';
+    }
+
+    document.getElementById("investTargetLabel").textContent = "objetivo " + fmtEur(invest);
+    document.getElementById("emergTargetLabel").textContent = "objetivo " + fmtEur(emerg);
+    document.getElementById("historyTargetLabel").textContent = "objetivo total " + fmtEur(state.totalMensual) + "/mes";
+  }
+
+  function currentInvestObjetivo(){ return clamp(state.investObjetivo, 0, state.totalMensual); }
+  function currentEmergObjetivo(){ return state.totalMensual - currentInvestObjetivo(); }
+
+  function renderInvestCard(){
+    // category select
+    var sel = document.getElementById("investCat");
+    var prevVal = sel.value;
+    sel.innerHTML = "";
+    state.categorias.forEach(function(c){
+      var o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o);
+    });
+    var otherOpt = document.createElement("option");
+    otherOpt.value = "__nueva__"; otherOpt.textContent = "+ nueva categoría";
+    sel.appendChild(otherOpt);
+    if (state.categorias.indexOf(prevVal) >= 0) sel.value = prevVal;
+
+    // progress
+    var total = investTotalMonth(currentMonth);
+    var target = currentInvestObjetivo();
+    var pct = target > 0 ? (total/target*100) : (total>0?100:0);
+    var fill = document.getElementById("investProgressFill");
+    fill.style.width = clamp(pct,0,100) + "%";
+    fill.className = "progress-fill invest" + (total > target && target > 0 ? " over" : "");
+    document.getElementById("investProgressText").textContent = fmtEur(total) + " / " + fmtEur(target);
+    document.getElementById("investProgressPct").textContent = Math.round(pct) + "%";
+
+    // entries list
+    var list = document.getElementById("investEntries");
+    var entries = investEntriesForMonth(currentMonth).slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+    if (entries.length === 0){
+      list.innerHTML = '<div class="empty-note">Todavía no has añadido inversiones este mes.</div>';
+    } else {
+      list.innerHTML = entries.map(function(e){
+        return '<div class="entry-row">' +
+          '<span class="dot" style="background:'+categoryColor(e.categoria)+'"></span>' +
+          '<span class="entry-cat"><span class="name">'+escapeHtml(e.categoria)+'</span>' +
+          (e.nota ? '<span class="note"> · '+escapeHtml(e.nota)+'</span>' : '') + '</span>' +
+          '<span class="entry-amt num">'+fmtEur(e.cantidad)+'</span>' +
+          '<button class="entry-del" data-del-invest="'+e.id+'" aria-label="Eliminar">✕</button>' +
+          '</div>';
+      }).join("");
+    }
+
+    var ventasMes = ventasDe("invest", currentMonth);
+
+    if (ventasMes.length) list.innerHTML += ventasMes.map(ventaRow).join("");
+
+    document.getElementById("investAllTotal").textContent = fmtEur(investTotalAll());
+
+    fillSelect(document.getElementById("sellCat"), state.categorias.filter(function(c){ return investHolding(c) > 0; }), false, "no tienes inversiones");
+
+    renderCategoryBreakdown();
+  }
+
+  function renderCategoryBreakdown(){
+    var source = breakdownScope === "month" ? investEntriesForMonth(currentMonth) : state.entries;
+    var totals = {};
+    state.categorias.forEach(function(c){ totals[c] = 0; });
+    source.forEach(function(e){ totals[e.categoria] = (totals[e.categoria]||0) + e.cantidad; });
+    (breakdownScope === "month" ? ventasDe("invest", currentMonth) : ventasDe("invest")).forEach(function(v){ totals[v.categoria] = (totals[v.categoria]||0) - v.cantidad; });
+    var cats = Object.keys(totals).filter(function(c){ return totals[c] > 0; });
+    var grand = cats.reduce(function(a,c){ return a + totals[c]; }, 0);
+
+    var bar = document.getElementById("catStackBar");
+    var legend = document.getElementById("catLegend");
+
+    if (grand === 0){
+      bar.innerHTML = '<div style="flex:1;background:var(--surface-2);border-radius:6px"></div>';
+      legend.innerHTML = '<div class="empty-note">Sin datos todavía.</div>';
+      return;
+    }
+
+    bar.innerHTML = cats.map(function(c){
+      var pct = totals[c]/grand*100;
+      return '<div class="stack-seg" title="'+escapeHtml(c)+': '+fmtEur(totals[c])+'" style="flex-basis:'+pct+'%;background:'+categoryColor(c)+'"></div>';
+    }).join("");
+
+    legend.innerHTML = cats.slice().sort(function(a,b){ return totals[b]-totals[a]; }).map(function(c){
+      var pct = Math.round(totals[c]/grand*100);
+      return '<div class="cat-legend-row">' +
+        '<span class="dot" style="background:'+categoryColor(c)+'"></span>' +
+        '<span class="name">'+escapeHtml(c)+'</span>' +
+        '<span class="pct">'+pct+'%</span>' +
+        '<span class="amt num">'+fmtEur(totals[c])+'</span>' +
+        '</div>';
+    }).join("");
+  }
+
+  function renderEmergCard(){
+    var total = emergTotalMonth(currentMonth);
+    var target = currentEmergObjetivo();
+    var pct = target > 0 ? (total/target*100) : (total>0?100:0);
+    var fill = document.getElementById("emergProgressFill");
+    fill.style.width = clamp(pct,0,100) + "%";
+    fill.className = "progress-fill emerg" + (total > target && target > 0 ? " over" : "");
+    document.getElementById("emergProgressText").textContent = fmtEur(total) + " / " + fmtEur(target);
+    document.getElementById("emergProgressPct").textContent = Math.round(pct) + "%";
+
+    document.getElementById("emergFundTotal").textContent = fmtEur(emergFundTotal());
+
+    var list = document.getElementById("emergEntries");
+    var entries = emergEntriesForMonth(currentMonth).slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+    if (entries.length === 0){
+      list.innerHTML = '<div class="empty-note">Todavía no has añadido nada al fondo este mes.</div>';
+    } else {
+      list.innerHTML = entries.map(function(e){
+        return '<div class="entry-row">' +
+          '<span class="dot emerg" style="background:var(--emerg)"></span>' +
+          '<span class="entry-cat"><span class="name">'+escapeHtml(e.categoria || "Aportación")+'</span>' +
+          (e.nota ? '<span class="note"> · '+escapeHtml(e.nota)+'</span>' : '') + '</span>' +
+          '<span class="entry-amt num">'+fmtEur(e.cantidad)+'</span>' +
+          '<button class="entry-del" data-del-emerg="'+e.id+'" aria-label="Eliminar">✕</button>' +
+          '</div>';
+      }).join("");
+    }
+    var retirosMes = ventasDe("fondo", currentMonth);
+    if (retirosMes.length) list.innerHTML += retirosMes.map(ventaRow).join("");
+    fillSelect(document.getElementById("emergCat"), state.fondoCategorias || [], true);
+    fillSelect(document.getElementById("withdrawCat"), state.fondoCategorias || [], false);
+    document.getElementById("fondoCatChips").innerHTML = (state.fondoCategorias || []).map(function(c){
+      return '<span class="cat-chip"><span>' + escapeHtml(c) + '</span><button type="button" data-del-fcat="' + escapeHtml(c) + '" aria-label="Eliminar" title="Eliminar">✕</button></span>';
+    }).join("");
+    if (!(state.fondoCategorias || []).length) document.getElementById("emergNewCatRow").classList.add("show");
+    renderFondoBreakdown();
+  }
+
+  function renderHistory(){
+    var months = allMonthsWithData().slice(-12); // last 12 with data / current
+    var target = state.totalMensual;
+
+    // table
+    var body = document.getElementById("historyBody");
+    body.innerHTML = months.slice().reverse().map(function(m){
+      var inv = investTotalMonth(m), em = emergTotalMonth(m), tot = inv+em;
+      var ok = target > 0 ? (tot >= target) : (tot > 0);
+      return '<tr>' +
+        '<td style="text-transform:capitalize">'+monthKeyToLabel(m)+'</td>' +
+        '<td class="num">'+fmtEur(inv)+'</td>' +
+        '<td class="num">'+fmtEur(em)+'</td>' +
+        '<td class="num"><b>'+fmtEur(tot)+'</b></td>' +
+        '<td><span class="tag '+(ok?"ok":"under")+'">'+(ok?"cumplido":"por debajo")+'</span></td>' +
+        '</tr>';
+    }).join("");
+
+    renderTrendChart(months, target);
+    renderCumulative();
+  }
+
+  function renderTrendChart(months, target){
+    var svg = document.getElementById("trendChart");
+    var W = 800, H = 220, padL = 40, padR = 16, padT = 14, padB = 30;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+
+    var maxVal = Math.max(target, 1);
+    months.forEach(function(m){ maxVal = Math.max(maxVal, investTotalMonth(m)+emergTotalMonth(m)); });
+    maxVal = maxVal * 1.15;
+
+    var n = Math.max(months.length, 1);
+    var slot = plotW / n;
+    var barW = Math.min(34, slot * 0.5);
+
+    var yScale = function(v){ return padT + plotH - (v/maxVal*plotH); };
+
+    var parts = [];
+
+    // gridlines (4)
+    var steps = 4;
+    for (var i=0;i<=steps;i++){
+      var v = maxVal/steps*i;
+      var y = yScale(v);
+      parts.push('<line class="gridline" x1="'+padL+'" x2="'+(W-padR)+'" y1="'+y+'" y2="'+y+'"/>');
+      parts.push('<text x="'+(padL-6)+'" y="'+(y+3)+'" text-anchor="end">'+Math.round(v)+'</text>');
+    }
+
+    // target line
+    if (target > 0){
+      var ty = yScale(target);
+      parts.push('<line class="target-line" x1="'+padL+'" x2="'+(W-padR)+'" y1="'+ty+'" y2="'+ty+'"/>');
+      parts.push('<text x="'+(W-padR)+'" y="'+(ty-4)+'" text-anchor="end" style="fill:var(--ink-mute)">objetivo</text>');
+    }
+
+    months.forEach(function(m, i){
+      var cx = padL + slot*i + slot/2;
+      var inv = investTotalMonth(m), em = emergTotalMonth(m);
+      var x = cx - barW/2;
+
+      var yInvTop = yScale(inv);
+      var hInv = (padT+plotH) - yInvTop;
+      if (hInv > 0){
+        parts.push('<rect class="bar-seg" data-tip-month="'+m+'" x="'+x+'" y="'+yInvTop+'" width="'+barW+'" height="'+hInv+'" rx="3" fill="var(--accent)"></rect>');
+      }
+      var yEmTop = yScale(inv+em) ;
+      var hEm = yInvTop - yEmTop - (hInv>0?2:0);
+      if (hEm > 0){
+        parts.push('<rect class="bar-seg" data-tip-month="'+m+'" x="'+x+'" y="'+yEmTop+'" width="'+barW+'" height="'+hEm+'" rx="3" fill="var(--emerg)"></rect>');
+      }
+
+      var lbl = monthKeyToLabel(m).slice(0,3).toUpperCase();
+      parts.push('<text x="'+cx+'" y="'+(H-10)+'" text-anchor="middle">'+lbl+'</text>');
+    });
+
+    svg.innerHTML = parts.join("");
+
+    // hover tooltip
+    var tip = document.getElementById("tip");
+    svg.querySelectorAll("[data-tip-month]").forEach(function(el){
+      el.addEventListener("mousemove", function(ev){
+        var m = el.getAttribute("data-tip-month");
+        var inv = investTotalMonth(m), em = emergTotalMonth(m);
+        tip.innerHTML =
+          '<div style="font-weight:600;margin-bottom:3px;text-transform:capitalize">'+monthKeyToLabel(m)+'</div>' +
+          '<div class="row"><span class="dot" style="background:var(--accent)"></span>Inversión <b>'+fmtEur(inv)+'</b></div>' +
+          '<div class="row"><span class="dot" style="background:var(--emerg)"></span>Fondo <b>'+fmtEur(em)+'</b></div>';
+        tip.style.left = ev.clientX + "px";
+        tip.style.top = ev.clientY + "px";
+        tip.classList.add("show");
+      });
+      el.addEventListener("mouseleave", function(){ tip.classList.remove("show"); });
+    });
+  }
+
+  function renderCumulative(){
+    var svg = document.getElementById("cumChart");
+    if (!svg) return;
+    var keys = allMonthsWithData();
+    var months = [];
+    for (var mk = keys[0]; mk <= keys[keys.length - 1] && months.length < 240; mk = addMonths(mk, 1)) months.push(mk);
+    var accInv = 0, accFon = 0;
+    var pts = months.map(function(m){
+      accInv += investTotalMonth(m) - sum(ventasDe("invest", m), "cantidad");
+      accFon += emergTotalMonth(m) - sum(ventasDe("fondo", m), "cantidad");
+      return { m: m, inv: accInv, fon: accFon, tot: accInv + accFon };
+    });
+    var totInv = investTotalAll(), totFon = emergFundTotal();
+    document.getElementById("cumInvest").textContent = fmtEur(totInv);
+    document.getElementById("cumFondo").textContent = fmtEur(totFon);
+    document.getElementById("cumTotal").textContent = fmtEur(totInv + totFon);
+    document.getElementById("cumTotalLabel").textContent = fmtEur(totInv + totFon);
+    var W = 800, H = 220, padL = 48, padR = 16, padT = 14, padB = 30;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxVal = 1, minVal = 0;
+    pts.forEach(function(p){ maxVal = Math.max(maxVal, p.tot, p.inv, p.fon); minVal = Math.min(minVal, p.tot, p.inv, p.fon); });
+    maxVal = maxVal * 1.15;
+    var n = pts.length;
+    var xAt = function(i){ return n <= 1 ? padL + plotW / 2 : padL + plotW * i / (n - 1); };
+    var yAt = function(v){ return padT + plotH - ((v - minVal) / (maxVal - minVal) * plotH); };
+    var parts = [];
+    for (var s = 0; s <= 4; s++){
+      var gv = minVal + (maxVal - minVal) / 4 * s, gy = yAt(gv);
+      parts.push('<line class="gridline" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + gy + '" y2="' + gy + '"/>');
+      parts.push('<text x="' + (padL - 6) + '" y="' + (gy + 3) + '" text-anchor="end">' + Math.round(gv) + '</text>');
+    }
+    function linea(key, color, width){
+      return '<polyline fill="none" stroke="' + color + '" stroke-width="' + width + '" stroke-linejoin="round" stroke-linecap="round" points="' +
+        pts.map(function(p, i){ return xAt(i) + ',' + yAt(p[key]); }).join(' ') + '"/>';
+    }
+    if (n > 1){
+      var area = 'M' + xAt(0) + ',' + yAt(0) + ' ' + pts.map(function(p, i){ return 'L' + xAt(i) + ',' + yAt(p.tot); }).join(' ') + ' L' + xAt(n - 1) + ',' + yAt(0) + ' Z';
+      parts.push('<path d="' + area + '" fill="var(--ink)" opacity="0.06"/>');
+      parts.push(linea("inv", "var(--accent)", 2));
+      parts.push(linea("fon", "var(--emerg)", 2));
+      parts.push(linea("tot", "var(--ink)", 3));
+    }
+    var every = Math.max(1, Math.ceil(n / 12));
+    var slotW = plotW / Math.max(n, 1);
+    pts.forEach(function(p, i){
+      if (i % every === 0 || i === n - 1) parts.push('<text x="' + xAt(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + monthKeyToLabel(p.m).slice(0,3).toUpperCase() + '</text>');
+      parts.push('<circle cx="' + xAt(i) + '" cy="' + yAt(p.tot) + '" r="4" fill="var(--ink)"/>');
+      parts.push('<rect data-cum="' + i + '" x="' + (xAt(i) - slotW / 2) + '" y="' + padT + '" width="' + slotW + '" height="' + plotH + '" fill="transparent"/>');
+    });
+    svg.innerHTML = parts.join("");
+    var tip = document.getElementById("tip");
+    svg.querySelectorAll("[data-cum]").forEach(function(el){
+      el.addEventListener("mousemove", function(ev){
+        var p = pts[+el.getAttribute("data-cum")];
+        tip.innerHTML =
+          '<div style="font-weight:600;margin-bottom:3px;text-transform:capitalize">' + monthKeyToLabel(p.m) + '</div>' +
+          '<div class="row"><span class="dot" style="background:var(--accent)"></span>Inversión <b>' + fmtEur(p.inv) + '</b></div>' +
+          '<div class="row"><span class="dot" style="background:var(--emerg)"></span>Fondo <b>' + fmtEur(p.fon) + '</b></div>' +
+          '<div class="row"><span class="dot" style="background:var(--ink)"></span>Total <b>' + fmtEur(p.tot) + '</b></div>';
+        tip.style.left = ev.clientX + "px";
+        tip.style.top = ev.clientY + "px";
+        tip.classList.add("show");
+      });
+      el.addEventListener("mouseleave", function(){ tip.classList.remove("show"); });
+    });
+  }
+  var fondoScope = "all";
+  function renderFondoBreakdown(){
+    var bar = document.getElementById("fondoStackBar"), legend = document.getElementById("fondoLegend");
+    if (!bar) return;
+    var mes = fondoScope === "month" ? currentMonth : null;
+    var SIN = "Sin categoría";
+    var cats = (state.fondoCategorias || []).slice();
+    var totals = {};
+    (mes ? emergEntriesForMonth(mes) : state.emergEntries).forEach(function(e){
+      var c = e.categoria || SIN;
+      if (cats.indexOf(c) < 0) cats.push(c);
+      totals[c] = (totals[c] || 0) + e.cantidad;
+    });
+    ventasDe("fondo", mes).forEach(function(v){
+      var c = v.categoria || SIN;
+      if (cats.indexOf(c) < 0) cats.push(c);
+      totals[c] = (totals[c] || 0) - v.cantidad;
+    });
+    var color = function(c){ return "var(" + CAT_COLORS[cats.indexOf(c) % CAT_COLORS.length] + ")"; };
+    var shown = cats.filter(function(c){ return (totals[c] || 0) !== 0; });
+    var pos = shown.filter(function(c){ return totals[c] > 0; });
+    var grand = pos.reduce(function(a, c){ return a + totals[c]; }, 0);
+    var vacio = '<div style="flex:1;background:var(--surface-2);border-radius:6px"></div>';
+    if (!shown.length){
+      bar.innerHTML = vacio;
+      legend.innerHTML = '<div class="empty-note">Sin datos todavía.</div>';
+      return;
+    }
+    bar.innerHTML = grand > 0 ? pos.map(function(c){
+      return '<div class="stack-seg" title="' + escapeHtml(c) + ': ' + fmtEur(totals[c]) + '" style="flex-basis:' + (totals[c] / grand * 100) + '%;background:' + color(c) + '"></div>';
+    }).join("") : vacio;
+    legend.innerHTML = shown.sort(function(a, b){ return totals[b] - totals[a]; }).map(function(c){
+      var pct = grand > 0 && totals[c] > 0 ? Math.round(totals[c] / grand * 100) + "%" : "";
+      return '<div class="cat-legend-row">' +
+        '<span class="dot" style="background:' + color(c) + '"></span>' +
+        '<span class="name">' + escapeHtml(c) + '</span>' +
+        '<span class="pct">' + pct + '</span>' +
+        '<span class="amt num">' + fmtEur(totals[c]) + '</span>' +
+      '</div>';
+    }).join("");
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function showLimitMsg(id, text){
+    var el = document.getElementById(id);
+    el.textContent = text;
+    el.hidden = false;
+  }
+  function hideLimitMsg(id){
+    var el = document.getElementById(id);
+    el.hidden = true;
+  }
+
+  // ---------- events ----------
+  document.getElementById("prevMonth").addEventListener("click", function(){
+    currentMonth = addMonths(currentMonth, -1); render();
+  });
+  document.getElementById("nextMonth").addEventListener("click", function(){
+    currentMonth = addMonths(currentMonth, 1); render();
+  });
+  document.getElementById("gotoToday").addEventListener("click", function(){
+    currentMonth = todayMonthKey(); render();
+  });
+
+  document.getElementById("totalInput").addEventListener("input", function(){
+    var v = parseFloat(this.value);
+    if (isNaN(v) || v < 0) return;
+    state.totalMensual = v;
+    if (state.investObjetivo > v) state.investObjetivo = v;
+    saveState(); renderHero(); renderInvestCard(); renderEmergCard(); renderHistory();
+  });
+  document.getElementById("splitSlider").addEventListener("input", function(){
+    state.investObjetivo = parseFloat(this.value);
+    saveState(); renderHero(); renderInvestCard(); renderEmergCard();
+  });
+
+  document.getElementById("investCat").addEventListener("change", function(){
+    var row = document.getElementById("newCatRow");
+    if (this.value === "__nueva__"){ row.classList.add("show"); document.getElementById("newCatInput").focus(); }
+    else { row.classList.remove("show"); }
+  });
+  document.getElementById("newCatConfirm").addEventListener("click", function(){
+    addNewCategory();
+  });
+  document.getElementById("newCatInput").addEventListener("keydown", function(e){
+    if (e.key === "Enter"){ e.preventDefault(); addNewCategory(); }
+  });
+  function addNewCategory(){
+    var input = document.getElementById("newCatInput");
+    var name = input.value.trim();
+    if (!name) return;
+    if (state.categorias.indexOf(name) < 0) state.categorias.push(name);
+    input.value = "";
+    document.getElementById("newCatRow").classList.remove("show");
+    saveState();
+    renderInvestCard();
+    document.getElementById("investCat").value = name;
+  }
+
+  document.getElementById("investForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var catSel = document.getElementById("investCat");
+    var cat = catSel.value;
+    if (cat === "__nueva__"){ addNewCategory(); cat = document.getElementById("investCat").value; if (cat === "__nueva__") return; }
+    var amtInput = document.getElementById("investAmt");
+    var amt = parseFloat(amtInput.value);
+    if (isNaN(amt) || amt <= 0) return;
+
+    var target = currentInvestObjetivo();
+    var used = investTotalMonth(currentMonth);
+    var remaining = Math.max(0, target - used);
+    if (amt > remaining){
+      showLimitMsg("investLimitMsg", "Eso supera tu objetivo de inversión (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
+      return;
+    }
+    hideLimitMsg("investLimitMsg");
+
+    var note = document.getElementById("investNote").value.trim();
+    state.entries.push({ id: uid(), mes: currentMonth, categoria: cat, cantidad: amt, nota: note, fecha: new Date().toISOString() });
+    saveState();
+    amtInput.value = ""; document.getElementById("investNote").value = "";
+    renderInvestCard(); renderHero(); renderHistory();
+  });
+
+  document.getElementById("emergForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var amtInput = document.getElementById("emergAmt");
+    var amt = parseFloat(amtInput.value);
+    if (isNaN(amt) || amt <= 0) return;
+
+    var target = currentEmergObjetivo();
+    var used = emergTotalMonth(currentMonth);
+    var remaining = Math.max(0, target - used);
+    if (amt > remaining){
+      showLimitMsg("emergLimitMsg", "Eso supera tu objetivo de fondo (" + fmtEur(target) + "). Te quedan " + fmtEur(remaining) + " libres este mes.");
+      return;
+    }
+    hideLimitMsg("emergLimitMsg");
+
+    var note = document.getElementById("emergNote").value.trim();
+    state.emergEntries.push({ id: uid(), mes: currentMonth, categoria: fondoCatSeleccionada(), cantidad: amt, nota: note, fecha: new Date().toISOString() });
+    saveState();
+    amtInput.value = ""; document.getElementById("emergNote").value = "";
+    renderEmergCard(); renderHistory();
+  });
+
+  document.getElementById("investEntries").addEventListener("click", function(e){
+    var id = e.target.getAttribute("data-del-invest");
+    if (!id) return;
+    state.entries = state.entries.filter(function(x){ return x.id !== id; });
+    saveState(); renderInvestCard(); renderHero(); renderHistory();
+  });
+  document.getElementById("emergEntries").addEventListener("click", function(e){
+    var id = e.target.getAttribute("data-del-emerg");
+    if (!id) return;
+    state.emergEntries = state.emergEntries.filter(function(x){ return x.id !== id; });
+    saveState(); renderEmergCard(); renderHistory();
+  });
+
+  document.querySelectorAll(".breakdown-toggle button").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".breakdown-toggle button").forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      breakdownScope = btn.getAttribute("data-scope");
+      renderCategoryBreakdown();
+    });
+  });
+
+  // ---- Fondo: en qué lo gastarás ----
+    function fondoCatSeleccionada(){
+      var c = document.getElementById("emergCat").value;
+      if (c === "__nueva__"){ addFondoCategory(); c = document.getElementById("emergCat").value; }
+      return c === "__nueva__" ? "" : c;
+    }
+    function addFondoCategory(){
+      var input = document.getElementById("emergNewCatInput");
+      var name = input.value.trim();
+      if (!name) return;
+      state.fondoCategorias = state.fondoCategorias || [];
+      if (state.fondoCategorias.indexOf(name) < 0) state.fondoCategorias.push(name);
+      input.value = "";
+      document.getElementById("emergNewCatRow").classList.remove("show");
+      saveState();
+      renderEmergCard();
+      document.getElementById("emergCat").value = name;
+    }
+    document.getElementById("emergCat").addEventListener("change", function(){
+      var row = document.getElementById("emergNewCatRow");
+      if (this.value === "__nueva__"){ row.classList.add("show"); document.getElementById("emergNewCatInput").focus(); }
+      else { row.classList.remove("show"); }
+    });
+    document.getElementById("emergNewCatConfirm").addEventListener("click", addFondoCategory);
+    document.getElementById("fondoCatChips").addEventListener("click", function(e){
+      var c = e.target.getAttribute("data-del-fcat");
+      if (c == null) return;
+      pedirConfirmacion(c, function(){
+        state.fondoCategorias = (state.fondoCategorias || []).filter(function(x){ return x !== c; });
+        saveState();
+        renderEmergCard();
+      });
+    });
+    function pedirConfirmacion(nombre, alConfirmar){
+      var modal = document.getElementById("confirmModal");
+      document.getElementById("confirmText").textContent = "¿Estás seguro de que quieres eliminar «" + nombre + "»?";
+      modal.hidden = false;
+      document.getElementById("confirmNo").focus();
+      function cerrar(){ modal.hidden = true; document.removeEventListener("keydown", onKey); }
+      function onKey(ev){ if (ev.key === "Escape") cerrar(); }
+      document.getElementById("confirmNo").onclick = cerrar;
+      modal.onclick = function(ev){ if (ev.target === modal) cerrar(); };
+      document.getElementById("confirmYes").onclick = function(){ cerrar(); alConfirmar(); };
+      document.addEventListener("keydown", onKey);
+    }
+    document.getElementById("emergNewCatInput").addEventListener("keydown", function(e){
+      if (e.key === "Enter"){ e.preventDefault(); addFondoCategory(); }
+    });
+    // ---- Vender inversiones / sacar del fondo ----
+    document.getElementById("sellToggle").addEventListener("click", function(){
+      var f = document.getElementById("sellForm"); f.hidden = !f.hidden; hideLimitMsg("sellMsg");
+    });
+    document.getElementById("withdrawToggle").addEventListener("click", function(){
+      var f = document.getElementById("withdrawForm"); f.hidden = !f.hidden; hideLimitMsg("withdrawMsg");
+    });
+    document.getElementById("sellForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var cat = document.getElementById("sellCat").value;
+      var amt = parseFloat(document.getElementById("sellAmt").value);
+      if (!cat){ showLimitMsg("sellMsg", "No tienes inversiones que vender."); return; }
+      if (isNaN(amt) || amt <= 0) return;
+      var disponible = investHolding(cat);
+      if (amt > disponible + 0.001){ showLimitMsg("sellMsg", "Solo tienes " + fmtEur(disponible) + " en " + cat + "."); return; }
+      hideLimitMsg("sellMsg");
+      state.ventas = state.ventas || [];
+      state.ventas.push({ id: uid(), mes: currentMonth, tipo: "invest", categoria: cat, cantidad: amt, nota: document.getElementById("sellNote").value.trim(), fecha: new Date().toISOString() });
+      saveState();
+      document.getElementById("sellAmt").value = ""; document.getElementById("sellNote").value = "";
+      document.getElementById("sellForm").hidden = true;
+      renderInvestCard(); renderHistory();
+    });
+    document.getElementById("withdrawForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var cat = document.getElementById("withdrawCat").value;
+      var amt = parseFloat(document.getElementById("withdrawAmt").value);
+      if (isNaN(amt) || amt <= 0) return;
+      var disponible = emergFundTotal();
+      if (amt > disponible + 0.001){ showLimitMsg("withdrawMsg", "En el fondo solo hay " + fmtEur(disponible) + "."); return; }
+      hideLimitMsg("withdrawMsg");
+      state.ventas = state.ventas || [];
+      state.ventas.push({ id: uid(), mes: currentMonth, tipo: "fondo", categoria: cat, cantidad: amt, nota: document.getElementById("withdrawNote").value.trim(), fecha: new Date().toISOString() });
+      saveState();
+      document.getElementById("withdrawAmt").value = ""; document.getElementById("withdrawNote").value = "";
+      document.getElementById("withdrawForm").hidden = true;
+      renderEmergCard(); renderHistory();
+    });
+    ["investEntries", "emergEntries"].forEach(function(listId){
+      document.getElementById(listId).addEventListener("click", function(e){
+        var vid = e.target.getAttribute("data-del-venta");
+        if (!vid) return;
+        state.ventas = (state.ventas || []).filter(function(x){ return x.id !== vid; });
+        saveState(); renderInvestCard(); renderEmergCard(); renderHistory();
+      });
+    });
+    document.querySelectorAll("#fondoScopeToggle button").forEach(function(b){
+      b.addEventListener("click", function(){
+        document.querySelectorAll("#fondoScopeToggle button").forEach(function(x){ x.classList.remove("active"); });
+        b.classList.add("active");
+        fondoScope = b.getAttribute("data-fscope");
+        renderFondoBreakdown();
+      });
+    });
+    document.getElementById("exportBtn").addEventListener("click", function(){
+    var json = JSON.stringify(state, null, 2);
+    var filename = "libro-ahorro-" + todayMonthKey() + ".json";
+    try {
+      var blob = new Blob([json], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch(e){
+      alert("No se pudo exportar la copia en esta vista.");
+    }
+  });
+  document.getElementById("importBtn").addEventListener("click", function(){
+    document.getElementById("importFile").click();
+  });
+  document.getElementById("importFile").addEventListener("change", function(e){
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try {
+        var data = mergeDefaults(JSON.parse(ev.target.result));
+        state = data;
+        saveState();
+        render();
+        alert("Copia importada correctamente.");
+      } catch(err){
+        alert("No se pudo leer el archivo. Asegúrate de que es una copia exportada desde esta misma app.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  });
+
+  // ---------- autenticación ----------
+  function showAuthGate(){
+    document.body.classList.add("auth-out");
+    document.getElementById("authGate").hidden = false;
+    document.getElementById("appRoot").hidden = true;
+    document.getElementById("accountBar").hidden = true;
+  }
+  async function showApp(user){
+    document.body.classList.remove("auth-out");
+    document.getElementById("authGate").hidden = true;
+    document.getElementById("appRoot").hidden = false;
+    document.getElementById("accountBar").hidden = false;
+    document.getElementById("accountEmail").textContent = user.email || "";
+    setSyncStatus(true, "cargando tus datos…");
+    state = await loadStateForUser(user);
+    saveLocalState();
+    setSyncStatus(true, "guardado en tu cuenta");
+    render();
+  }
+  function authMsg(text){
+    var el = document.getElementById("authMsg");
+    el.textContent = text;
+    el.hidden = false;
+  }
+
+  if (!sb) {
+    // No se pudo cargar el cliente de Supabase (sin red, CDN bloqueado, etc.):
+    // seguimos funcionando solo con este navegador para no dejar la app inservible.
+    state = loadLocalState();
+    document.getElementById("authGate").hidden = true;
+    document.getElementById("appRoot").hidden = false;
+    setSyncStatus(false, "sin conexión con la cuenta, guardado local");
+    render();
+  } else {
+    var authMode = "login";
+    var recovering = /type=recovery/.test(location.hash);
+    function setAuthMode(m){
+      authMode = m;
+      var titles = { login: "Inicia sesión", recover: "Recuperar contraseña", newpass: "Elige una nueva contraseña" };
+      document.getElementById("authHeading").textContent = titles[m];
+      document.getElementById("authForm").hidden = (m === "newpass");
+      document.getElementById("newPassForm").hidden = (m !== "newpass");
+      var pw = document.getElementById("authPassword");
+      pw.hidden = (m === "recover");
+      pw.required = (m === "login");
+      document.getElementById("authSignupBtn").hidden = (m !== "login");
+      document.getElementById("authLoginBtn").textContent = m === "recover" ? "Enviar enlace de recuperación" : "Iniciar sesión";
+      document.getElementById("forgotBtn").textContent = m === "recover" ? "← Volver a iniciar sesión" : "¿Olvidaste tu contraseña?";
+      document.getElementById("authMsg").hidden = true;
+    }
+    document.getElementById("forgotBtn").addEventListener("click", function(){
+      setAuthMode(authMode === "recover" ? "login" : "recover");
+    });
+    document.getElementById("newPassForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      var btn = document.getElementById("newPassSubmit");
+      btn.disabled = true;
+      var res = await sb.auth.updateUser({ password: document.getElementById("newPassword").value });
+      if (res.error) { authMsg(res.error.message || "No se pudo cambiar la contraseña."); btn.disabled = false; return; }
+      authMsg("Contraseña actualizada. Entrando…");
+      recovering = false;
+      setTimeout(function(){ location.replace(location.pathname); }, 800);
+    });
+    document.getElementById("authForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      document.getElementById("authMsg").hidden = true;
+      var email = document.getElementById("authEmail").value.trim();
+      var password = document.getElementById("authPassword").value;
+      if (authMode === "recover") {
+        var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+        authMsg(r.error ? (r.error.message || "No se pudo enviar el correo.") : "Si hay una cuenta con ese correo, te hemos enviado un enlace para cambiar la contraseña. Revisa tu bandeja de entrada y la carpeta de spam.");
+        return;
+      }
+      var res = await sb.auth.signInWithPassword({ email: email, password: password });
+      if (res.error) authMsg(res.error.message || "No se pudo iniciar sesión.");
+    });
+    document.getElementById("authSignupBtn").addEventListener("click", async function(){
+      document.getElementById("authMsg").hidden = true;
+      var email = document.getElementById("authEmail").value.trim();
+      var password = document.getElementById("authPassword").value;
+      if (!email || password.length < 6){
+        authMsg("Escribe un correo y una contraseña de al menos 6 caracteres.");
+        return;
+      }
+      var res = await sb.auth.signUp({ email: email, password: password, options: { emailRedirectTo: location.origin + location.pathname } });
+      if (res.error) authMsg(res.error.message || "No se pudo crear la cuenta.");
+      else if (!res.data.session) authMsg("Cuenta creada. Ya puedes iniciar sesión.");
+    });
+    document.getElementById("signOutBtn").addEventListener("click", async function(){
+      await sb.auth.signOut();
+    });
+
+    sb.auth.onAuthStateChange(function(event, session){
+      if (event === "PASSWORD_RECOVERY") recovering = true;
+      if (recovering && session) { showAuthGate(); setAuthMode("newpass"); return; }
+      if (session && session.user) {
+        // Si solo se renovó el token del mismo usuario, no recargamos la app
+        var sameUser = currentUser && currentUser.id === session.user.id;
+        currentUser = session.user;
+        if (!sameUser) showApp(session.user);
+      } else {
+        currentUser = null;
+        showAuthGate();
+      }
+    });
+    sb.auth.getSession().then(function(res){
+      if (!res.data || !res.data.session) showAuthGate();
+    });
+  }
+})();
+</script>
+<!-- Confirmación para eliminar -->
+<div id="confirmModal" class="modal-back" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+    <p id="confirmText" class="modal-title"></p>
+    <p class="modal-sub">Tus aportaciones anteriores no se borran.</p>
+    <div class="modal-actions">
+      <button type="button" class="ghost-btn" id="confirmNo">Cancelar</button>
+      <button type="button" class="modal-danger" id="confirmYes">Eliminar</button>
+    </div>
+  </div>
+</div>
+<!-- Idioma: Español / Italiano / English -->
+<style>
+.lang-bar { display: flex; justify-content: flex-end; margin: -12px 0 10px; }
+.lang-btn { font-size: 0.78rem; }
+</style>
+<script>
+(function(){
+  var LANGS = ["es", "it", "en"];
+  var NAMES = { es: "Español", it: "Italiano", en: "English" };
+  // español: [italiano, inglés]
+  var T = {
+    "Libro de Ahorro": ["Libro dei Risparmi", "Savings Book"],
+    "Tú decides cuánto ahorras cada mes y cómo lo repartes.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo.", "You decide how much to save each month and how to split it."],
+    "Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo tra investimenti e fondo.", "You decide how much to save each month and how to split it between investments and fund."],
+    "guardado en tu cuenta": ["salvato nel tuo account", "saved to your account"],
+    "cargando…": ["caricamento…", "loading…"],
+    "cargando tus datos…": ["caricamento dei tuoi dati…", "loading your data…"],
+    "sin conexión, guardado local": ["offline, salvato in locale", "offline, saved locally"],
+    "sin conexión con la cuenta, guardado local": ["nessuna connessione all'account, salvato in locale", "no connection to your account, saved locally"],
+    "Cerrar sesión": ["Esci", "Sign out"],
+    "Fija tu objetivo de ahorro mensual": ["Imposta il tuo obiettivo di risparmio mensile", "Set your monthly savings goal"],
+    "Repártelo entre inversión y fondo": ["Ripartiscilo tra investimenti e fondo", "Split it between investments and fund"],
+    "Guardado en tu cuenta: entra desde cualquier dispositivo": ["Salvato nel tuo account: accedi da qualsiasi dispositivo", "Saved to your account: sign in from any device"],
+    "Inicia sesión": ["Accedi", "Sign in"],
+    "Iniciar sesión": ["Accedi", "Sign in"],
+    "Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.": ["Ti chiediamo l'email solo per creare il tuo account e salvare il tuo Libro dei Risparmi in modo sicuro, così puoi vederlo da qualsiasi dispositivo. Non la usiamo per nient'altro. La sessione resta attiva su questo dispositivo finché non premi «Esci»; te la richiederemo solo se la sessione scade o se esci.", "We only ask for your email to create your account and keep your Savings Book safe, so you can see it from any device. We don't use it for anything else. You stay signed in on this device until you press «Sign out»; we'll only ask again if your session expires or you sign out."],
+    "Crear cuenta": ["Crea account", "Create account"],
+    "¿Olvidaste tu contraseña?": ["Password dimenticata?", "Forgot your password?"],
+    "Guardar nueva contraseña": ["Salva nuova password", "Save new password"],
+    "Recuperar contraseña": ["Recupera password", "Reset password"],
+    "Elige una nueva contraseña": ["Scegli una nuova password", "Choose a new password"],
+    "Enviar enlace de recuperación": ["Invia link di recupero", "Send reset link"],
+    "← Volver a iniciar sesión": ["← Torna all'accesso", "← Back to sign in"],
+    "No se pudo cambiar la contraseña.": ["Impossibile cambiare la password.", "Couldn't change the password."],
+    "Contraseña actualizada. Entrando…": ["Password aggiornata. Accesso in corso…", "Password updated. Signing in…"],
+    "No se pudo enviar el correo.": ["Impossibile inviare l'email.", "Couldn't send the email."],
+    "Si hay una cuenta con ese correo, te hemos enviado un enlace para cambiar la contraseña. Revisa tu bandeja de entrada y la carpeta de spam.": ["Se esiste un account con questa email, ti abbiamo inviato un link per cambiare la password. Controlla la posta in arrivo e la cartella spam.", "If there's an account with that email, we've sent you a link to change your password. Check your inbox and spam folder."],
+    "No se pudo iniciar sesión.": ["Impossibile accedere.", "Couldn't sign in."],
+    "Escribe un correo y una contraseña de al menos 6 caracteres.": ["Scrivi un'email e una password di almeno 6 caratteri.", "Enter an email and a password of at least 6 characters."],
+    "No se pudo crear la cuenta.": ["Impossibile creare l'account.", "Couldn't create the account."],
+    "Cuenta creada. Ya puedes iniciar sesión.": ["Account creato. Ora puoi accedere.", "Account created. You can sign in now."],
+    "hoy": ["oggi", "today"],
+    "Objetivo de ahorro mensual": ["Obiettivo di risparmio mensile", "Monthly savings goal"],
+    "Escribe cuánto quieres ahorrar este mes y ajusta el reparto abajo": ["Scrivi quanto vuoi risparmiare questo mese e regola la ripartizione qui sotto", "Enter how much you want to save this month and adjust the split below"],
+    "Inversión": ["Investimenti", "Investments"],
+    "Fondo": ["Fondo", "Fund"],
+    "Total": ["Totale", "Total"],
+    "Acciones": ["Azioni", "Stocks"],
+    "+ nueva categoría": ["+ nuova categoria", "+ new category"],
+    "Añadir": ["Aggiungi", "Add"],
+    "crear": ["crea", "create"],
+    "invertido en total (descontando ventas)": ["investito in totale (al netto delle vendite)", "invested in total (minus sales)"],
+    "− Registrar una venta": ["− Registra una vendita", "− Record a sale"],
+    "Vender": ["Vendi", "Sell"],
+    "este mes": ["questo mese", "this month"],
+    "histórico": ["storico", "all time"],
+    "Sin datos todavía.": ["Ancora nessun dato.", "No data yet."],
+    "Todavía no has añadido inversiones este mes.": ["Non hai ancora aggiunto investimenti questo mese.", "You haven't added any investments this month yet."],
+    "Todavía no has añadido nada al fondo este mes.": ["Non hai ancora aggiunto nulla al fondo questo mese.", "You haven't added anything to the fund this month yet."],
+    "acumulado en el fondo (todos los meses)": ["accumulato nel fondo (tutti i mesi)", "accumulated in the fund (all months)"],
+    "Imprevistos": ["Imprevisti", "Emergencies"],
+    "Viajes": ["Viaggi", "Travel"],
+    "Coche": ["Auto", "Car"],
+    "Casa": ["Casa", "Home"],
+    "Salud": ["Salute", "Health"],
+    "− Sacar dinero del fondo": ["− Preleva dal fondo", "− Withdraw from the fund"],
+    "Sacar": ["Preleva", "Withdraw"],
+    "Aportación": ["Versamento", "Contribution"],
+    "Cancelar": ["Annulla", "Cancel"],
+    "Privacidad y cookies": ["Privacy e cookie", "Privacy & cookies"],
+    "Términos de uso": ["Termini d'uso", "Terms of use"],
+    "Términos de uso y aviso legal": ["Termini d'uso e note legali", "Terms of use & legal notice"],
+    "Al crear una cuenta aceptas los términos de uso y la política de privacidad.": ["Creando un account accetti i termini d'uso e l'informativa sulla privacy.", "By creating an account you accept the terms of use and the privacy policy."],
+    "Al crear una cuenta aceptas la política de privacidad": ["Creando un account accetti l'informativa sulla privacy", "By creating an account you accept the privacy policy"],
+    "Más información": ["Maggiori informazioni", "More info"],
+    "Compartir": ["Condividi", "Share"],
+    "Más opciones…": ["Altre opzioni…", "More options…"],
+    "Mensaje de texto": ["Messaggio di testo", "Text message"],
+    "Correo": ["Email", "Email"],
+    "Copiar enlace": ["Copia link", "Copy link"],
+    "Enlace copiado.": ["Link copiato.", "Link copied."],
+    "Enlace copiado. Pégalo en Instagram (en un mensaje o en tu historia).": ["Link copiato. Incollalo su Instagram (in un messaggio o nella tua storia).", "Link copied. Paste it on Instagram (in a message or your story)."],
+    "Registro del fondo por categoría": ["Registro del fondo per categoria", "Fund record by category"],
+    "Sin categoría": ["Senza categoria", "Uncategorized"],
+    "Tus aportaciones anteriores no se borran.": ["I versamenti precedenti non vengono cancellati.", "Your previous contributions won't be deleted."],
+    "Categorías del fondo:": ["Categorie del fondo:", "Fund categories:"],
+    "no tienes inversiones": ["non hai investimenti", "you have no investments"],
+    "No tienes inversiones que vender.": ["Non hai investimenti da vendere.", "You have no investments to sell."],
+    "Historial mensual": ["Storico mensile", "Monthly history"],
+    "objetivo": ["obiettivo", "target"],
+    "Mes": ["Mese", "Month"],
+    "Estado": ["Stato", "Status"],
+    "cumplido": ["raggiunto", "met"],
+    "por debajo": ["sotto", "below"],
+    "Total ahorrado acumulado": ["Totale risparmiato accumulato", "Total saved so far"],
+    "Suma de todo lo que has aportado mes a mes, restando lo que has vendido o sacado del fondo.": ["Somma di tutto ciò che hai versato mese per mese, meno ciò che hai venduto o prelevato dal fondo.", "Everything you've contributed month by month, minus what you've sold or withdrawn from the fund."],
+    "Tus datos se guardan en tu cuenta. Usa «Exportar copia» para descargar una copia de seguridad en cualquier momento (o para pasarlos a otro dispositivo con «Importar copia»).": ["I tuoi dati sono salvati nel tuo account. Usa «Esporta copia» per scaricare un backup in qualsiasi momento (o per trasferirli su un altro dispositivo con «Importa copia»).", "Your data is saved to your account. Use «Export backup» to download a backup at any time (or to move it to another device with «Import backup»)."],
+    "Exportar copia": ["Esporta copia", "Export backup"],
+    "Importar copia": ["Importa copia", "Import backup"],
+    "No se pudo exportar la copia en esta vista.": ["Impossibile esportare la copia in questa vista.", "Couldn't export the backup in this view."],
+    "Copia importada correctamente.": ["Copia importata correttamente.", "Backup imported successfully."],
+    "No se pudo leer el archivo. Asegúrate de que es una copia exportada desde esta misma app.": ["Impossibile leggere il file. Assicurati che sia una copia esportata da questa stessa app.", "Couldn't read the file. Make sure it's a backup exported from this same app."],
+    "Este sitio usa cookies y almacenamiento local para mantener tu sesión y guardar tus datos. Al registrarte o iniciar sesión con tu email, aceptas su uso.": ["Questo sito usa cookie e archiviazione locale per mantenere la sessione e salvare i tuoi dati. Registrandoti o accedendo con la tua email, ne accetti l'uso.", "This site uses cookies and local storage to keep you signed in and save your data. By signing up or signing in with your email, you accept their use."],
+    "Aceptar": ["Accetta", "Accept"],
+    "Correo electrónico": ["Email", "Email"],
+    "Contraseña": ["Password", "Password"],
+    "Nueva contraseña (mínimo 6 caracteres)": ["Nuova password (minimo 6 caratteri)", "New password (at least 6 characters)"],
+    "Mes anterior": ["Mese precedente", "Previous month"],
+    "Mes siguiente": ["Mese successivo", "Next month"],
+    "nota (opcional)": ["nota (facoltativa)", "note (optional)"],
+    "nombre de la categoría": ["nome della categoria", "category name"],
+    "€ vendidos": ["€ venduti", "€ sold"],
+    "Eliminar": ["Elimina", "Delete"],
+    "¿En qué lo gastarás?": ["In cosa lo spenderai?", "What will you spend it on?"],
+    "¿en qué lo gastarás? (p. ej. Vacaciones)": ["in cosa lo spenderai? (es. Vacanze)", "what will you spend it on? (e.g. Holidays)"]
+  };
+  var MES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  var MES_T = [
+    ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"],
+    ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  ];
+  var ABR = { ENE:["GEN","JAN"], FEB:["FEB","FEB"], MAR:["MAR","MAR"], ABR:["APR","APR"], MAY:["MAG","MAY"], JUN:["GIU","JUN"], JUL:["LUG","JUL"], AGO:["AGO","AUG"], SEP:["SET","SEP"], OCT:["OTT","OCT"], NOV:["NOV","NOV"], DIC:["DIC","DEC"] };
+  var RULES = [
+    [/^objetivo total (.+)\/mes$/, ["obiettivo totale $1/mese", "total target $1/month"]],
+    [/^objetivo (.+)$/, ["obiettivo $1", "target $1"]],
+    [/^Eso supera tu objetivo de inversión \((.+)\)\. Te quedan (.+) libres este mes\.$/, ["Supera il tuo obiettivo di investimento ($1). Ti restano $2 liberi questo mese.", "That's over your investment target ($1). You have $2 left this month."]],
+    [/^Eso supera tu objetivo de fondo \((.+)\)\. Te quedan (.+) libres este mes\.$/, ["Supera il tuo obiettivo del fondo ($1). Ti restano $2 liberi questo mese.", "That's over your fund target ($1). You have $2 left this month."]],
+    [/^Solo tienes (.+) en (.+)\.$/, ["Hai solo $1 in $2.", "You only have $1 in $2."]],
+    [/^En el fondo solo hay (.+)\.$/, ["Nel fondo ci sono solo $1.", "The fund only has $1."]]
+  ];
+  var lang = "es";
+  try { lang = localStorage.getItem("libroLang") || "es"; } catch (e) {}
+  if (LANGS.indexOf(lang) < 0) lang = "es";
+
+  function trCore(c, li){
+    if (T[c]) return T[c][li];
+    var mm = c.match(/^([a-zA-ZñÑ]+) (\d{4})$/);
+    if (mm){ var k = MES.indexOf(mm[1].toLowerCase()); if (k >= 0) return MES_T[li][k] + " " + mm[2]; }
+    if (ABR[c]) return ABR[c][li];
+    var cm = c.match(/^¿Estás seguro de que quieres eliminar «([\s\S]*)»\?$/);
+    if (cm){ var nm = T[cm[1]] ? T[cm[1]][li] : cm[1]; return (li === 0 ? "Sei sicuro di voler eliminare «" : "Are you sure you want to delete «") + nm + "»?"; }
+    var vm = c.match(/^(Venta|Retiro) · ([\s\S]*)$/);
+    if (vm) return (vm[1] === "Venta" ? ["Vendita", "Sale"] : ["Prelievo", "Withdrawal"])[li] + " · " + (T[vm[2]] ? T[vm[2]][li] : vm[2]);
+    for (var i = 0; i < RULES.length; i++){
+      if (RULES[i][0].test(c)) return c.replace(RULES[i][0], RULES[i][1][li]);
+    }
+    return null;
+  }
+  function tr(s){
+    if (lang === "es" || !s) return s;
+    var m = s.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    if (!m[2]) return s;
+    var out = trCore(m[2], lang === "it" ? 0 : 1);
+    return out == null ? s : m[1] + out + m[3];
+  }
+
+  var ATTRS = ["placeholder", "title", "aria-label"];
+  var btn = document.createElement("button");
+  function apply(){
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var n;
+    while ((n = w.nextNode())){
+      var p = n.parentNode;
+      if (!p || p === btn || p.nodeName === "SCRIPT" || p.nodeName === "STYLE") continue;
+      if (n.__tr !== n.nodeValue) n.__es = n.nodeValue;
+      var t = tr(n.__es);
+      if (t !== n.nodeValue) n.nodeValue = t;
+      n.__tr = t;
+    }
+    document.querySelectorAll("[placeholder],[title],[aria-label]").forEach(function(el){
+      if (el === btn) return;
+      el.__esA = el.__esA || {}; el.__trA = el.__trA || {};
+      ATTRS.forEach(function(a){
+        var v = el.getAttribute(a);
+        if (v == null) return;
+        if (el.__trA[a] !== v) el.__esA[a] = v;
+        var t = tr(el.__esA[a]);
+        if (t !== v) el.setAttribute(a, t);
+        el.__trA[a] = t;
+      });
+    });
+    document.title = tr("Libro de Ahorro");
+    document.documentElement.lang = lang;
+  }
+
+  var OPTS = { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS };
+  var pending = false;
+  var obs = new MutationObserver(function(){
+    if (pending) return;
+    pending = true;
+    requestAnimationFrame(function(){
+      pending = false;
+      obs.disconnect();
+      apply();
+      obs.observe(document.body, OPTS);
+    });
+  });
+
+  btn.type = "button";
+  btn.id = "langBtn";
+  btn.className = "ghost-btn lang-btn";
+  function label(){
+    btn.textContent = "🌐 " + NAMES[lang];
+    btn.title = { es: "Cambiar idioma", it: "Cambia lingua", en: "Change language" }[lang];
+  }
+  btn.addEventListener("click", function(){
+    lang = LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];
+    try { localStorage.setItem("libroLang", lang); } catch (e) {}
+    label();
+    obs.disconnect();
+    apply();
+    obs.observe(document.body, OPTS);
+  });
+  var bar = document.createElement("div");
+  bar.className = "lang-bar";
+  bar.appendChild(btn);
+  var sheet = document.querySelector(".sheet") || document.body;
+  sheet.insertBefore(bar, sheet.firstChild);
+
+  var _alert = window.alert;
+  window.alert = function(m){ return _alert.call(window, tr(String(m))); };
+
+  label();
+  apply();
+  obs.observe(document.body, OPTS);
+})();
+</script>
+<!-- Compartir -->
+<style>
+.lang-bar { gap: 8px; }
+.share-wrap { position: relative; }
+.share-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 50; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 6px; min-width: 220px; display: flex; flex-direction: column; }
+.share-menu a, .share-menu button { display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 10px; border-radius: 8px; font-family: inherit; font-size: 0.85rem; color: var(--ink); text-decoration: none; background: none; border: 0; cursor: pointer; }
+.share-menu a:hover, .share-menu button:hover { background: var(--surface-2); }
+.share-note { font-size: 0.75rem; color: var(--accent); padding: 6px 10px; max-width: 220px; line-height: 1.4; }
+</style>
+<script>
+(function(){
+  var bar = document.querySelector(".lang-bar");
+  if (!bar) return;
+  var MSG = {
+    es: { title: "Libro de Ahorro", text: "Te recomiendo el Libro de Ahorro para organizar lo que ahorras cada mes:" },
+    it: { title: "Libro dei Risparmi", text: "Ti consiglio il Libro dei Risparmi per organizzare quanto risparmi ogni mese:" },
+    en: { title: "Savings Book", text: "Check out Savings Book to organise how much you save each month:" }
+  };
+  var wrap = document.createElement("div");
+  wrap.className = "share-wrap";
+  wrap.innerHTML =
+    '<button type="button" class="ghost-btn lang-btn" id="shareBtn" aria-haspopup="true"><span aria-hidden="true">📤</span> <span>Compartir</span></button>' +
+    '<div class="share-menu" id="shareMenu" hidden>' +
+      '<button type="button" data-net="native" hidden><span aria-hidden="true">📲</span><span>Más opciones…</span></button>' +
+      '<a data-net="whatsapp" target="_blank" rel="noopener"><span aria-hidden="true">💬</span><span>WhatsApp</span></a>' +
+      '<button type="button" data-net="instagram"><span aria-hidden="true">📸</span><span>Instagram</span></button>' +
+      '<a data-net="sms"><span aria-hidden="true">📱</span><span>Mensaje de texto</span></a>' +
+      '<a data-net="telegram" target="_blank" rel="noopener"><span aria-hidden="true">✈️</span><span>Telegram</span></a>' +
+      '<a data-net="facebook" target="_blank" rel="noopener"><span aria-hidden="true">📘</span><span>Facebook</span></a>' +
+      '<a data-net="x" target="_blank" rel="noopener"><span aria-hidden="true">𝕏</span><span>X (Twitter)</span></a>' +
+      '<a data-net="email"><span aria-hidden="true">✉️</span><span>Correo</span></a>' +
+      '<button type="button" data-net="copy"><span aria-hidden="true">🔗</span><span>Copiar enlace</span></button>' +
+      '<div class="share-note" id="shareNote" hidden></div>' +
+    '</div>';
+  bar.insertBefore(wrap, bar.firstChild);
+  var btn = document.getElementById("shareBtn");
+  var menu = document.getElementById("shareMenu");
+  var note = document.getElementById("shareNote");
+  function datos(){
+    var m = MSG[document.documentElement.lang] || MSG.es;
+    return { title: m.title, text: m.text, url: location.origin + location.pathname };
+  }
+  function enc(s){ return encodeURIComponent(s); }
+  function prepararEnlaces(){
+    var d = datos();
+    var hrefs = {
+      whatsapp: "https://wa.me/?text=" + enc(d.text + " " + d.url),
+      sms: "sms:?&body=" + enc(d.text + " " + d.url),
+      telegram: "https://t.me/share/url?url=" + enc(d.url) + "&text=" + enc(d.text),
+      facebook: "https://www.facebook.com/sharer/sharer.php?u=" + enc(d.url),
+      x: "https://twitter.com/intent/tweet?text=" + enc(d.text) + "&url=" + enc(d.url),
+      email: "mailto:?subject=" + enc(d.title) + "&body=" + enc(d.text + "\n" + d.url)
+    };
+    menu.querySelectorAll("a[data-net]").forEach(function(a){ a.href = hrefs[a.getAttribute("data-net")]; });
+    menu.querySelector('[data-net="native"]').hidden = !navigator.share;
+  }
+  function aviso(t){ note.textContent = t; note.hidden = false; }
+  function copiar(texto, alTerminar){
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = texto; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+      alTerminar();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(texto).then(alTerminar, fallback);
+    else fallback();
+  }
+  function cerrar(){ menu.hidden = true; note.hidden = true; }
+  btn.addEventListener("click", function(e){
+    e.stopPropagation();
+    if (menu.hidden){ prepararEnlaces(); note.hidden = true; menu.hidden = false; }
+    else cerrar();
+  });
+  menu.addEventListener("click", function(e){
+    e.stopPropagation();
+    var item = e.target.closest("[data-net]");
+    if (!item) return;
+    var net = item.getAttribute("data-net");
+    var d = datos();
+    if (net === "native"){
+      navigator.share({ title: d.title, text: d.text, url: d.url }).catch(function(){});
+    } else if (net === "copy"){
+      copiar(d.url, function(){ aviso("Enlace copiado."); });
+    } else if (net === "instagram"){
+      if (navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
+        navigator.share({ title: d.title, text: d.text, url: d.url }).catch(function(){});
+      } else {
+        copiar(d.text + " " + d.url, function(){ aviso("Enlace copiado. Pégalo en Instagram (en un mensaje o en tu historia)."); });
+      }
+    } else {
+      setTimeout(cerrar, 300);
+    }
+  });
+  document.addEventListener("click", function(){ if (!menu.hidden) cerrar(); });
+  document.addEventListener("keydown", function(e){ if (e.key === "Escape") cerrar(); });
+})();
+</script>
+<!-- Aviso de cookies -->
+<div id="cookie-banner" style="position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:640px;margin:0 auto;background:#1f2937;color:#fff;padding:14px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);font:14px/1.4 system-ui,sans-serif;display:none;gap:12px;align-items:center;flex-wrap:wrap">
+  <span style="flex:1;min-width:200px">Este sitio usa cookies y almacenamiento local para mantener tu sesión y guardar tus datos. Al registrarte o iniciar sesión con tu email, aceptas su uso. <a href="privacidad.html" style="color:#fff;text-decoration:underline">Más información</a></span>
+  <button id="cookie-accept" type="button" style="background:#fff;color:#1f2937;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer">Aceptar</button>
+</div>
+<script>
+(function(){var b=document.getElementById('cookie-banner');b.style.display='flex';document.getElementById('cookie-accept').onclick=function(){b.style.display='none';};})();
+</script>
+</body>
+</html>
