@@ -1846,6 +1846,7 @@ body.auth-out header.top { display: none; }
     "De la cuenta": ["Dal conto", "From the account"],
     "Alquiler cobrado": ["Affitto incassato", "Rent received"],
     "Pensión": ["Pensione", "Pension"],
+    "la cuenta": ["il conto", "the account"],
     "Tú decides cuánto ahorras cada mes y cómo lo repartes.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo.", "You decide how much to save each month and how to split it."],
     "Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo tra investimenti e fondo.", "You decide how much to save each month and how to split it between investments and fund."],
     "guardado en tu cuenta": ["salvato nel tuo account", "saved to your account"],
@@ -1957,9 +1958,10 @@ body.auth-out header.top { display: none; }
   ];
   var ABR = { ENE:["GEN","JAN"], FEB:["FEB","FEB"], MAR:["MAR","MAR"], ABR:["APR","APR"], MAY:["MAG","MAY"], JUN:["GIU","JUN"], JUL:["LUG","JUL"], AGO:["AGO","AUG"], SEP:["SET","SEP"], OCT:["OTT","OCT"], NOV:["NOV","NOV"], DIC:["DIC","DEC"] };
   var RULES = [
-    [/^Sale de: la cuenta(.*)$/, ["Esce da: conto$1", "From: account$1"]],
-    [/^Sale de: Intereses(.*)$/, ["Esce da: interessi$1", "From: interest$1"]],
+    [/^Sale de: (.+?) \(quedan (.+)\)$/, ["Esce da: $1 (restano $2)", "From: $1 ($2 left)"]],
+    [/^Sale de: (.+?) \((.+)\)$/, ["Esce da: $1 ($2)", "From: $1 ($2)"]],
     [/^Sale de: (.+)$/, ["Esce da: $1", "From: $1"]],
+    [/^([^:]+): (−?-?[\d.,]+ €)$/, ["$1: $2", "$1: $2"]],
     [/^· de la cuenta$/, ["· dal conto", "· from the account"]],
     [/^· de (.+)$/, ["· da $1", "· from $1"]],
     [/^· desde (.+)$/, ["· da $1", "· since $1"]],
@@ -1992,7 +1994,12 @@ body.auth-out header.top { display: none; }
     var vm = c.match(/^(Venta|Retiro) · ([\s\S]*)$/);
     if (vm) return (vm[1] === "Venta" ? ["Vendita", "Sale"] : ["Prelievo", "Withdrawal"])[li] + " · " + (T[vm[2]] ? T[vm[2]][li] : vm[2]);
     for (var i = 0; i < RULES.length; i++){
-      if (RULES[i][0].test(c)) return c.replace(RULES[i][0], RULES[i][1][li]);
+      var rm = c.match(RULES[i][0]);
+      if (rm) return RULES[i][1][li].replace(/\$(\d)/g, function(_, d){
+        var g = rm[+d] || "";
+        var tg = trCore(g, li);
+        return tg == null ? g : tg;
+      });
     }
     return null;
   }
