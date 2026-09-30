@@ -365,6 +365,13 @@ body.auth-out header.top { display: none; }
   .origen-total { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; padding-top: 6px; border-top: 1px solid var(--line-soft); }
   form.add-row select.origen-sel { flex: 1 1 100%; }
 
+  /* ---- objetivo simple ---- */
+  .goal-simple { display: flex; flex-direction: column; gap: 10px; }
+  .goal-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .goal-status { font-size: 0.85rem; color: var(--ink-soft); text-align: right; }
+  .goal-status b { font-family: "IBM Plex Mono", monospace; color: var(--ink); }
+  .goal-simple .progress-fill.done { background: var(--good); }
+
   /* ---- plegables ---- */
   .grid2 { align-items: start; }
   .fold-head { cursor: pointer; user-select: none; border-radius: 10px; }
@@ -494,6 +501,19 @@ body.auth-out header.top { display: none; }
       <h3>¿De dónde sale el dinero este mes?</h3>
       <div id="origenResumen"></div>
     </div>
+  </section>
+
+  <!-- OBJETIVO MENSUAL (solo la cantidad) -->
+  <section class="hero goal-simple" id="goalSimple">
+    <div class="goal-row">
+      <div>
+        <div class="hero-title">Objetivo de ahorro mensual</div>
+        <div class="total-edit"><span class="eur">€</span><input type="number" id="goalInput" min="0" step="10" placeholder="0"></div>
+      </div>
+      <div class="goal-status" id="goalStatus"></div>
+    </div>
+    <div class="progress-track"><div class="progress-fill invest" id="goalFill" style="width:0%"></div></div>
+    <div class="progress-nums"><span id="goalText">Escribe cuánto quieres ahorrar cada mes</span><b class="num" id="goalPct"></b></div>
   </section>
 
   <section class="hero" id="goalSection" hidden>
@@ -923,12 +943,31 @@ body.auth-out header.top { display: none; }
     if (!sel.dataset.escucha){ sel.dataset.escucha = "1"; sel.addEventListener("change", function(){ sel.dataset.elegido = "1"; }); }
   }
 
+  // Objetivo mensual: solo una cantidad; muestra cuánto llevas ahorrado este mes
+  function renderGoal(){
+    var goal = state.totalMensual || 0;
+    var hecho = investTotalMonth(currentMonth) + emergTotalMonth(currentMonth);
+    var gi = document.getElementById("goalInput");
+    if (document.activeElement !== gi) gi.value = goal > 0 ? goal : "";
+    var pct = goal > 0 ? hecho / goal * 100 : 0;
+    var fill = document.getElementById("goalFill");
+    fill.style.width = clamp(pct, 0, 100) + "%";
+    fill.className = "progress-fill invest" + (goal > 0 && hecho >= goal ? " done" : "");
+    document.getElementById("goalPct").textContent = goal > 0 ? Math.round(pct) + "%" : "";
+    document.getElementById("goalText").textContent = goal > 0 ? "Llevas " + fmtEur(hecho) + " de " + fmtEur(goal) + " este mes" : "Escribe cuánto quieres ahorrar cada mes";
+    var st = document.getElementById("goalStatus");
+    if (goal <= 0) st.textContent = "";
+    else if (hecho >= goal) st.textContent = "¡Objetivo cumplido!";
+    else st.textContent = "Te faltan " + fmtEur(goal - hecho);
+  }
+
   function renderMoney(){
     var cuenta = state.saldoCuenta || 0, inv = totalValorInv(), fondo = emergFundTotal();
     document.getElementById("moneyTotal").textContent = fmtEur(cuenta + inv + fondo);
     document.getElementById("moneyCuenta").textContent = fmtEur(cuenta);
     document.getElementById("moneyInv").textContent = fmtEur(inv);
     document.getElementById("moneyFondo").textContent = fmtEur(fondo);
+    renderGoal();
     document.getElementById("investTargetLabel").textContent = fmtEur(inv);
     document.getElementById("emergTargetLabel").textContent = fmtEur(fondo);
     var aportado = catsConInversion().reduce(function(a, c){ return a + investHolding(c); }, 0);
@@ -1633,6 +1672,13 @@ body.auth-out header.top { display: none; }
       set(false, false);
       btn.addEventListener("click", function(){ set(btn.getAttribute("aria-expanded") !== "true", true); });
     })();
+    document.getElementById("goalInput").addEventListener("input", function(){
+      var v = this.value === "" ? 0 : parseFloat(this.value);
+      if (isNaN(v) || v < 0) return;
+      state.totalMensual = v;
+      if (state.investObjetivo > v) state.investObjetivo = v;
+      saveState(); renderGoal();
+    });
     // ---- Tu dinero ----
     document.getElementById("saldoInput").addEventListener("input", function(){
       var v = this.value === "" ? null : parseFloat(this.value);
@@ -1886,6 +1932,8 @@ body.auth-out header.top { display: none; }
     "Pensión": ["Pensione", "Pension"],
     "la cuenta": ["il conto", "the account"],
     "Ver gráficos": ["Vedi grafici", "View charts"],
+    "Escribe cuánto quieres ahorrar cada mes": ["Scrivi quanto vuoi risparmiare ogni mese", "Enter how much you want to save each month"],
+    "¡Objetivo cumplido!": ["Obiettivo raggiunto!", "Goal reached!"],
     "Ocultar gráficos": ["Nascondi grafici", "Hide charts"],
     "Historial mensual y total ahorrado acumulado": ["Storico mensile e totale risparmiato accumulato", "Monthly history and total saved so far"],
     "Tú decides cuánto ahorras cada mes y cómo lo repartes.": ["Decidi tu quanto risparmiare ogni mese e come ripartirlo.", "You decide how much to save each month and how to split it."],
@@ -1999,6 +2047,8 @@ body.auth-out header.top { display: none; }
   ];
   var ABR = { ENE:["GEN","JAN"], FEB:["FEB","FEB"], MAR:["MAR","MAR"], ABR:["APR","APR"], MAY:["MAG","MAY"], JUN:["GIU","JUN"], JUL:["LUG","JUL"], AGO:["AGO","AUG"], SEP:["SET","SEP"], OCT:["OTT","OCT"], NOV:["NOV","NOV"], DIC:["DIC","DEC"] };
   var RULES = [
+    [/^Llevas (.+) de (.+) este mes$/, ["Hai risparmiato $1 su $2 questo mese", "You've saved $1 of $2 this month"]],
+    [/^Te faltan (.+)$/, ["Ti mancano $1", "$1 to go"]],
     [/^Sale de: (.+?) \(quedan (.+)\)$/, ["Esce da: $1 (restano $2)", "From: $1 ($2 left)"]],
     [/^Sale de: (.+?) \((.+)\)$/, ["Esce da: $1 ($2)", "From: $1 ($2)"]],
     [/^Sale de: (.+)$/, ["Esce da: $1", "From: $1"]],
