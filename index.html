@@ -372,6 +372,15 @@ body.auth-out header.top { display: none; }
   .goal-status b { font-family: "IBM Plex Mono", monospace; color: var(--ink); }
   .goal-simple .progress-fill.done { background: var(--good); }
 
+  /* ---- simple ---- */
+  .money-sec.first { border-top: 0; padding-top: 0; margin-top: 0; }
+  details.more { border-top: 1px dashed var(--line); padding-top: 10px; }
+  details.more summary { cursor: pointer; font-size: 0.82rem; color: var(--ink-soft); font-weight: 600; list-style: none; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::before { content: "▸ "; }
+  details.more[open] summary::before { content: "▾ "; }
+  .more-body { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+
   /* ---- plegables ---- */
   .grid2 { align-items: start; }
   .fold-head { cursor: pointer; user-select: none; border-radius: 10px; }
@@ -450,60 +459,18 @@ body.auth-out header.top { display: none; }
     <button class="month-today" id="gotoToday">hoy</button>
   </div>
 
-  <!-- TU DINERO -->
+  <!-- 1. CUÁNTO TIENES -->
   <section class="hero money" id="moneyCard">
-    <div class="hero-title">Tu dinero hoy</div>
+    <div class="hero-title">Tienes en total</div>
     <div class="money-total"><span id="moneyTotal">0 €</span></div>
     <div class="money-split">
-      <div class="money-box"><span class="dot" style="background:var(--ink-soft)"></span><span class="lbl">Cuenta</span><b class="num" id="moneyCuenta">0 €</b></div>
-      <div class="money-box"><span class="dot invest"></span><span class="lbl">Inversiones (valor actual)</span><b class="num" id="moneyInv">0 €</b><span class="gain" id="moneyInvGain"></span></div>
+      <div class="money-box"><span class="dot" style="background:var(--ink-soft)"></span><span class="lbl">En la cuenta</span><b class="num" id="moneyCuenta">0 €</b></div>
+      <div class="money-box"><span class="dot invest"></span><span class="lbl">Invertido (vale hoy)</span><b class="num" id="moneyInv">0 €</b><span class="gain" id="moneyInvGain"></span></div>
       <div class="money-box"><span class="dot emerg"></span><span class="lbl">Fondo</span><b class="num" id="moneyFondo">0 €</b></div>
-    </div>
-
-    <div class="money-sec">
-      <h3>Saldo en la cuenta</h3>
-      <div class="val-row">
-        <span class="name">Dinero en tu cuenta ahora</span>
-        <span class="val-input">€ <input type="number" id="saldoInput" min="0" step="0.01" placeholder="0"></span>
-      </div>
-      <p class="money-hint">Se descuenta solo cuando inviertes o ahorras «de la cuenta».</p>
-    </div>
-
-    <div class="money-sec">
-      <h3>Valor actual de tus inversiones</h3>
-      <div id="invValues"></div>
-      <p class="money-hint">Escribe cuánto valen hoy. El valor se mantiene los meses siguientes hasta que lo cambies; si aportas más, se suma solo.</p>
-    </div>
-
-    <div class="money-sec">
-      <h3>Entradas fijas <span class="sub">(se repiten cada mes)</span></h3>
-      <div class="entries-list" id="fijasList"></div>
-      <form class="add-row" id="fijaForm">
-        <input type="text" id="fijaNombre" placeholder="Nómina" list="fijaSugerencias">
-        <datalist id="fijaSugerencias"><option value="Nómina"><option value="Alquiler cobrado"><option value="Pensión"></datalist>
-        <input type="number" id="fijaAmt" placeholder="€/mes" min="0" step="0.01" required>
-        <button type="submit">Añadir</button>
-      </form>
-    </div>
-
-    <div class="money-sec">
-      <h3>Intereses <span class="sub">(este mes)</span></h3>
-      <div class="entries-list" id="interesesList"></div>
-      <form class="add-row" id="interesForm">
-        <select id="interesOrigen" title="¿De dónde vienen?"></select>
-        <input type="number" id="interesAmt" placeholder="€" min="0" step="0.01" required>
-        <input type="text" id="interesNote" placeholder="nota (opcional)">
-        <button type="submit">Añadir</button>
-      </form>
-    </div>
-
-    <div class="money-sec">
-      <h3>¿De dónde sale el dinero este mes?</h3>
-      <div id="origenResumen"></div>
     </div>
   </section>
 
-  <!-- OBJETIVO MENSUAL (solo la cantidad) -->
+  <!-- 2. OBJETIVO DEL MES -->
   <section class="hero goal-simple" id="goalSimple">
     <div class="goal-row">
       <div>
@@ -543,7 +510,7 @@ body.auth-out header.top { display: none; }
 
   <div class="grid2">
 
-    <!-- INVESTMENT CARD -->
+    <!-- 3. INVERSIÓN -->
     <div class="card fold collapsed" id="investCard">
       <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
         <h2><span class="fold-arrow" aria-hidden="true">▸</span><span class="swatch" style="background:var(--accent)"></span>Inversión</h2>
@@ -553,6 +520,11 @@ body.auth-out header.top { display: none; }
       <div class="progress-wrap" hidden>
         <div class="progress-track"><div class="progress-fill invest" id="investProgressFill"></div></div>
         <div class="progress-nums"><b class="num" id="investProgressText">0 € / 0 €</b><span id="investProgressPct">0%</span></div>
+      </div>
+
+      <div class="fund-total">
+        <span class="n num" id="investAllTotal">0 €</span>
+        <span class="l">invertido en total</span>
       </div>
 
       <form class="add-row" id="investForm">
@@ -566,33 +538,32 @@ body.auth-out header.top { display: none; }
         <input type="text" id="newCatInput" placeholder="nombre de la categoría">
         <button type="button" class="ghost-btn" id="newCatConfirm">crear</button>
       </div>
-      <div class="fund-total">
-        <span class="n num" id="investAllTotal">0 €</span>
-        <span class="l">invertido en total (descontando ventas)</span>
-      </div>
-      <button type="button" class="ghost-btn out-toggle" id="sellToggle">− Registrar una venta</button>
-      <form class="add-row out-row" id="sellForm" hidden>
-        <select id="sellCat"></select>
-        <input type="number" id="sellAmt" placeholder="€ vendidos" min="0" step="0.01" required>
-        <input type="text" id="sellNote" placeholder="nota (opcional)">
-        <button type="submit">Vender</button>
-      </form>
-      <div id="sellMsg" class="limit-msg" hidden></div>
       <div id="investLimitMsg" class="limit-msg" hidden></div>
 
       <div class="entries-list" id="investEntries"></div>
 
-      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px;border-top:1px dashed var(--line)">
-        <div class="breakdown-toggle">
-          <button type="button" class="active" data-scope="month">este mes</button>
-          <button type="button" data-scope="all">histórico</button>
+      <details class="more">
+        <summary>Más opciones</summary>
+        <div class="more-body">
+          <button type="button" class="ghost-btn out-toggle" id="sellToggle">− Registrar una venta</button>
+          <form class="add-row out-row" id="sellForm" hidden>
+            <select id="sellCat"></select>
+            <input type="number" id="sellAmt" placeholder="€ vendidos" min="0" step="0.01" required>
+            <input type="text" id="sellNote" placeholder="nota (opcional)">
+            <button type="submit">Vender</button>
+          </form>
+          <div id="sellMsg" class="limit-msg" hidden></div>
+          <div class="breakdown-toggle">
+            <button type="button" class="active" data-scope="month">este mes</button>
+            <button type="button" data-scope="all">histórico</button>
+          </div>
+          <div class="stack-bar" id="catStackBar"></div>
+          <div class="cat-legend" id="catLegend"></div>
         </div>
-        <div class="stack-bar" id="catStackBar"></div>
-        <div class="cat-legend" id="catLegend"></div>
-      </div>
+      </details>
     </div>
 
-    <!-- EMERGENCY CARD -->
+    <!-- 3. FONDO -->
     <div class="card fold collapsed" id="emergCard">
       <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
         <h2><span class="fold-arrow" aria-hidden="true">▸</span><span class="swatch" style="background:var(--emerg)"></span>Fondo</h2>
@@ -606,7 +577,7 @@ body.auth-out header.top { display: none; }
 
       <div class="fund-total">
         <span class="n num" id="emergFundTotal">0 €</span>
-        <span class="l">acumulado en el fondo (todos los meses)</span>
+        <span class="l">guardado en el fondo</span>
       </div>
 
       <form class="add-row emerg" id="emergForm">
@@ -620,26 +591,82 @@ body.auth-out header.top { display: none; }
         <input type="text" id="emergNewCatInput" placeholder="¿en qué lo gastarás? (p. ej. Vacaciones)">
         <button type="button" class="ghost-btn" id="emergNewCatConfirm">crear</button>
       </div>
-      <div class="cat-chips"><span>Categorías del fondo:</span><span id="fondoCatChips" class="cat-chips"></span></div>
-      <button type="button" class="ghost-btn out-toggle" id="withdrawToggle">− Sacar dinero del fondo</button>
-      <form class="add-row out-row" id="withdrawForm" hidden>
-        <select id="withdrawCat"></select>
-        <input type="number" id="withdrawAmt" placeholder="€" min="0" step="0.01" required>
-        <input type="text" id="withdrawNote" placeholder="nota (opcional)">
-        <button type="submit">Sacar</button>
-      </form>
-      <div id="withdrawMsg" class="limit-msg" hidden></div>
       <div id="emergLimitMsg" class="limit-msg" hidden></div>
 
       <div class="entries-list" id="emergEntries"></div>
-      <div style="display:flex;flex-direction:column;gap:10px;padding-top:4px;border-top:1px dashed var(--line)">
-        <div class="cat-chips"><span>Registro del fondo por categoría</span></div>
-        <div class="fscope-toggle" id="fondoScopeToggle">
-          <button type="button" data-fscope="month">este mes</button>
-          <button type="button" class="active" data-fscope="all">histórico</button>
+
+      <details class="more">
+        <summary>Más opciones</summary>
+        <div class="more-body">
+          <button type="button" class="ghost-btn out-toggle" id="withdrawToggle">− Sacar dinero del fondo</button>
+          <form class="add-row out-row" id="withdrawForm" hidden>
+            <select id="withdrawCat"></select>
+            <input type="number" id="withdrawAmt" placeholder="€" min="0" step="0.01" required>
+            <input type="text" id="withdrawNote" placeholder="nota (opcional)">
+            <button type="submit">Sacar</button>
+          </form>
+          <div id="withdrawMsg" class="limit-msg" hidden></div>
+          <div class="cat-chips"><span>Categorías del fondo:</span><span id="fondoCatChips" class="cat-chips"></span></div>
+          <div class="cat-chips"><span>Registro del fondo por categoría</span></div>
+          <div class="fscope-toggle" id="fondoScopeToggle">
+            <button type="button" data-fscope="month">este mes</button>
+            <button type="button" class="active" data-fscope="all">histórico</button>
+          </div>
+          <div class="stack-bar" id="fondoStackBar"></div>
+          <div class="cat-legend" id="fondoLegend"></div>
         </div>
-        <div class="stack-bar" id="fondoStackBar"></div>
-        <div class="cat-legend" id="fondoLegend"></div>
+      </details>
+    </div>
+
+    <!-- 4. INGRESOS -->
+    <div class="card wide fold collapsed" id="incomeCard">
+      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
+        <h2><span class="fold-arrow" aria-hidden="true">▸</span>Mis ingresos</h2>
+        <span class="card-target num" id="incomeLabel"></span>
+      </div>
+      <div class="money-sec first">
+        <h3>Ingresos fijos <span class="sub">(cada mes)</span></h3>
+        <div class="entries-list" id="fijasList"></div>
+        <form class="add-row" id="fijaForm">
+          <input type="text" id="fijaNombre" placeholder="Nómina" list="fijaSugerencias">
+          <datalist id="fijaSugerencias"><option value="Nómina"><option value="Alquiler cobrado"><option value="Pensión"></datalist>
+          <input type="number" id="fijaAmt" placeholder="€/mes" min="0" step="0.01" required>
+          <button type="submit">Añadir</button>
+        </form>
+      </div>
+      <div class="money-sec">
+        <h3>Intereses <span class="sub">(este mes)</span></h3>
+        <div class="entries-list" id="interesesList"></div>
+        <form class="add-row" id="interesForm">
+          <select id="interesOrigen" title="¿De dónde vienen?"></select>
+          <input type="number" id="interesAmt" placeholder="€" min="0" step="0.01" required>
+          <input type="text" id="interesNote" placeholder="nota (opcional)">
+          <button type="submit">Añadir</button>
+        </form>
+      </div>
+      <div class="money-sec">
+        <h3>¿De dónde sale el dinero este mes?</h3>
+        <div id="origenResumen"></div>
+      </div>
+    </div>
+
+    <!-- 5. CUENTA E INVERSIONES -->
+    <div class="card wide fold collapsed" id="valuesCard">
+      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
+        <h2><span class="fold-arrow" aria-hidden="true">▸</span>Cuenta y valor de inversiones</h2>
+      </div>
+      <div class="money-sec first">
+        <h3>Saldo en la cuenta</h3>
+        <div class="val-row">
+          <span class="name">Dinero en tu cuenta ahora</span>
+          <span class="val-input">€ <input type="number" id="saldoInput" min="0" step="0.01" placeholder="0"></span>
+        </div>
+        <p class="money-hint">Escribe cuánto tienes ahora en el banco.</p>
+      </div>
+      <div class="money-sec">
+        <h3>Valor actual de tus inversiones</h3>
+        <div id="invValues"></div>
+        <p class="money-hint">Escribe cuánto valen hoy. Se guarda para los próximos meses.</p>
       </div>
     </div>
 
@@ -968,6 +995,8 @@ body.auth-out header.top { display: none; }
     document.getElementById("moneyInv").textContent = fmtEur(inv);
     document.getElementById("moneyFondo").textContent = fmtEur(fondo);
     renderGoal();
+    var fijasMes = sum(fijasDelMes(currentMonth), "cantidad");
+    document.getElementById("incomeLabel").textContent = fijasMes > 0 ? "+" + fmtEur(fijasMes) + "/mes" : "";
     document.getElementById("investTargetLabel").textContent = fmtEur(inv);
     document.getElementById("emergTargetLabel").textContent = fmtEur(fondo);
     var aportado = catsConInversion().reduce(function(a, c){ return a + investHolding(c); }, 0);
@@ -1932,6 +1961,18 @@ body.auth-out header.top { display: none; }
     "Pensión": ["Pensione", "Pension"],
     "la cuenta": ["il conto", "the account"],
     "Ver gráficos": ["Vedi grafici", "View charts"],
+    "Tienes en total": ["Hai in totale", "Your total"],
+    "En la cuenta": ["Sul conto", "In the account"],
+    "Invertido (vale hoy)": ["Investito (valore di oggi)", "Invested (worth today)"],
+    "invertido en total": ["investito in totale", "invested in total"],
+    "guardado en el fondo": ["messo da parte nel fondo", "saved in the fund"],
+    "Más opciones": ["Altre opzioni", "More options"],
+    "Mis ingresos": ["Le mie entrate", "My income"],
+    "Ingresos fijos": ["Entrate fisse", "Fixed income"],
+    "(cada mes)": ["(ogni mese)", "(every month)"],
+    "Cuenta y valor de inversiones": ["Conto e valore degli investimenti", "Account and investment value"],
+    "Escribe cuánto tienes ahora en el banco.": ["Scrivi quanto hai adesso in banca.", "Enter how much you have in the bank now."],
+    "Escribe cuánto valen hoy. Se guarda para los próximos meses.": ["Scrivi quanto valgono oggi. Resta salvato per i prossimi mesi.", "Enter what they're worth today. It's kept for the next months."],
     "Escribe cuánto quieres ahorrar cada mes": ["Scrivi quanto vuoi risparmiare ogni mese", "Enter how much you want to save each month"],
     "¡Objetivo cumplido!": ["Obiettivo raggiunto!", "Goal reached!"],
     "Ocultar gráficos": ["Nascondi grafici", "Hide charts"],
@@ -2049,6 +2090,7 @@ body.auth-out header.top { display: none; }
   var RULES = [
     [/^Llevas (.+) de (.+) este mes$/, ["Hai risparmiato $1 su $2 questo mese", "You've saved $1 of $2 this month"]],
     [/^Te faltan (.+)$/, ["Ti mancano $1", "$1 to go"]],
+    [/^\+(.+)\/mes$/, ["+$1/mese", "+$1/month"]],
     [/^Sale de: (.+?) \(quedan (.+)\)$/, ["Esce da: $1 (restano $2)", "From: $1 ($2 left)"]],
     [/^Sale de: (.+?) \((.+)\)$/, ["Esce da: $1 ($2)", "From: $1 ($2)"]],
     [/^Sale de: (.+)$/, ["Esce da: $1", "From: $1"]],
