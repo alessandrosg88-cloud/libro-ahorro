@@ -510,6 +510,58 @@ body.auth-out header.top { display: none; }
 
   <div class="grid2">
 
+    <!-- 4. INGRESOS -->
+    <div class="card wide fold collapsed" id="incomeCard">
+      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
+        <h2><span class="fold-arrow" aria-hidden="true">▸</span>Mis ingresos</h2>
+        <span class="card-target num" id="incomeLabel"></span>
+      </div>
+      <div class="money-sec first">
+        <h3>Ingresos fijos <span class="sub">(cada mes)</span></h3>
+        <div class="entries-list" id="fijasList"></div>
+        <form class="add-row" id="fijaForm">
+          <input type="text" id="fijaNombre" placeholder="Nómina" list="fijaSugerencias">
+          <datalist id="fijaSugerencias"><option value="Nómina"><option value="Alquiler cobrado"><option value="Pensión"></datalist>
+          <input type="number" id="fijaAmt" placeholder="€/mes" min="0" step="0.01" required>
+          <button type="submit">Añadir</button>
+        </form>
+      </div>
+      <div class="money-sec">
+        <h3>Intereses <span class="sub">(este mes)</span></h3>
+        <div class="entries-list" id="interesesList"></div>
+        <form class="add-row" id="interesForm">
+          <select id="interesOrigen" title="¿De dónde vienen?"></select>
+          <input type="number" id="interesAmt" placeholder="€" min="0" step="0.01" required>
+          <input type="text" id="interesNote" placeholder="nota (opcional)">
+          <button type="submit">Añadir</button>
+        </form>
+      </div>
+      <div class="money-sec">
+        <h3>¿De dónde sale el dinero este mes?</h3>
+        <div id="origenResumen"></div>
+      </div>
+    </div>
+
+    <!-- 5. CUENTA E INVERSIONES -->
+    <div class="card wide fold collapsed" id="valuesCard">
+      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
+        <h2><span class="fold-arrow" aria-hidden="true">▸</span>Cuenta y valor de inversiones</h2>
+      </div>
+      <div class="money-sec first">
+        <h3>Saldo en la cuenta</h3>
+        <div class="val-row">
+          <span class="name">Dinero en tu cuenta ahora</span>
+          <span class="val-input">€ <input type="number" id="saldoInput" min="0" step="0.01" placeholder="0"></span>
+        </div>
+        <p class="money-hint">Escribe cuánto tienes ahora en el banco.</p>
+      </div>
+      <div class="money-sec">
+        <h3>Valor actual de tus inversiones</h3>
+        <div id="invValues"></div>
+        <p class="money-hint">Escribe cuánto valen hoy. Se guarda para los próximos meses.</p>
+      </div>
+    </div>
+
     <!-- 3. INVERSIÓN -->
     <div class="card fold collapsed" id="investCard">
       <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
@@ -616,58 +668,6 @@ body.auth-out header.top { display: none; }
           <div class="cat-legend" id="fondoLegend"></div>
         </div>
       </details>
-    </div>
-
-    <!-- 4. INGRESOS -->
-    <div class="card wide fold collapsed" id="incomeCard">
-      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
-        <h2><span class="fold-arrow" aria-hidden="true">▸</span>Mis ingresos</h2>
-        <span class="card-target num" id="incomeLabel"></span>
-      </div>
-      <div class="money-sec first">
-        <h3>Ingresos fijos <span class="sub">(cada mes)</span></h3>
-        <div class="entries-list" id="fijasList"></div>
-        <form class="add-row" id="fijaForm">
-          <input type="text" id="fijaNombre" placeholder="Nómina" list="fijaSugerencias">
-          <datalist id="fijaSugerencias"><option value="Nómina"><option value="Alquiler cobrado"><option value="Pensión"></datalist>
-          <input type="number" id="fijaAmt" placeholder="€/mes" min="0" step="0.01" required>
-          <button type="submit">Añadir</button>
-        </form>
-      </div>
-      <div class="money-sec">
-        <h3>Intereses <span class="sub">(este mes)</span></h3>
-        <div class="entries-list" id="interesesList"></div>
-        <form class="add-row" id="interesForm">
-          <select id="interesOrigen" title="¿De dónde vienen?"></select>
-          <input type="number" id="interesAmt" placeholder="€" min="0" step="0.01" required>
-          <input type="text" id="interesNote" placeholder="nota (opcional)">
-          <button type="submit">Añadir</button>
-        </form>
-      </div>
-      <div class="money-sec">
-        <h3>¿De dónde sale el dinero este mes?</h3>
-        <div id="origenResumen"></div>
-      </div>
-    </div>
-
-    <!-- 5. CUENTA E INVERSIONES -->
-    <div class="card wide fold collapsed" id="valuesCard">
-      <div class="card-head fold-head" role="button" tabindex="0" aria-expanded="false">
-        <h2><span class="fold-arrow" aria-hidden="true">▸</span>Cuenta y valor de inversiones</h2>
-      </div>
-      <div class="money-sec first">
-        <h3>Saldo en la cuenta</h3>
-        <div class="val-row">
-          <span class="name">Dinero en tu cuenta ahora</span>
-          <span class="val-input">€ <input type="number" id="saldoInput" min="0" step="0.01" placeholder="0"></span>
-        </div>
-        <p class="money-hint">Escribe cuánto tienes ahora en el banco.</p>
-      </div>
-      <div class="money-sec">
-        <h3>Valor actual de tus inversiones</h3>
-        <div id="invValues"></div>
-        <p class="money-hint">Escribe cuánto valen hoy. Se guarda para los próximos meses.</p>
-      </div>
     </div>
 
     <!-- GRÁFICOS -->
