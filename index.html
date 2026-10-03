@@ -901,7 +901,8 @@ body.auth-out header.top { display: none; }
 
   // ---------- rendering ----------
   // ---------- tu dinero: valor actual, entradas fijas, intereses, origen ----------
-  var ORIGEN_CUENTA = "cuenta", ORIGEN_INTERESES = "intereses";
+  var ORIGEN_CUENTA = "cuenta", ORIGEN_INTERESES = "intereses", ORIGEN_FONDO = "fondo";
+  var CAT_TRASPASO = "Traspaso a Inversión";
   function fijasDelMes(mes){
     return (state.entradasFijas || []).filter(function(f){ return f.desde <= mes && (!f.hasta || f.hasta >= mes); });
   }
@@ -920,6 +921,7 @@ body.auth-out header.top { display: none; }
     if (!o) return "";
     if (o === ORIGEN_CUENTA) return "la cuenta";
     if (o === ORIGEN_INTERESES) return "Intereses";
+    if (o === ORIGEN_FONDO) return "el Fondo";
     return o.replace(/^fija:/, "");
   }
   // Orígenes disponibles en un mes, con cuánto entra y cuánto se ha usado
@@ -941,6 +943,11 @@ body.auth-out header.top { display: none; }
   }
   // Devuelve un mensaje si no hay dinero suficiente en el origen elegido
   function faltaDinero(origen, amt){
+    if (origen === ORIGEN_FONDO){
+      var enFondo = emergFundTotal();
+      if (amt > enFondo + 0.001) return "En el fondo solo hay " + fmtEur(Math.max(0, enFondo)) + ".";
+      return null;
+    }
     if (origen === ORIGEN_CUENTA){
       if (state.saldoCuenta != null && amt > state.saldoCuenta + 0.001) return "En la cuenta solo tienes " + fmtEur(state.saldoCuenta) + ".";
       return null;
@@ -963,6 +970,13 @@ body.auth-out header.top { display: none; }
       op.textContent = "Sale de: " + origenLabel(o.key) + (o.entra != null ? " (quedan " + fmtEur(Math.max(0, o.entra - o.usado)) + ")" : (state.saldoCuenta != null ? " (" + fmtEur(state.saldoCuenta) + ")" : ""));
       sel.appendChild(op);
     });
+    // Inversión: también se puede pagar con dinero del Fondo (traspaso)
+    if (sel.id === "investOrigen"){
+      var opF = document.createElement("option");
+      opF.value = ORIGEN_FONDO;
+      opF.textContent = "Sale de: el Fondo (hay " + fmtEur(Math.max(0, emergFundTotal())) + ")";
+      sel.appendChild(opF);
+    }
     var keys = Array.prototype.map.call(sel.options, function(x){ return x.value; });
     // Mantiene lo que eligió la persona; si no eligió nada, usa la primera entrada con dinero
     if (sel.dataset.elegido === "1" && keys.indexOf(prev) >= 0) sel.value = prev;
@@ -1523,10 +1537,19 @@ body.auth-out header.top { display: none; }
 
     var note = document.getElementById("investNote").value.trim();
     aplicarSalidaCuenta(origen, -amt);
-    state.entries.push({ id: uid(), mes: currentMonth, categoria: cat, cantidad: amt, nota: note, origen: origen, fecha: new Date().toISOString() });
+    var entryId = uid();
+    var nuevaEntrada = { id: entryId, mes: currentMonth, categoria: cat, cantidad: amt, nota: note, origen: origen, fecha: new Date().toISOString() };
+    if (origen === ORIGEN_FONDO){
+      // Traspaso: sale del Fondo (retiro enlazado) y entra en Inversión
+      var ventaId = uid();
+      nuevaEntrada.ventaId = ventaId;
+      state.ventas = state.ventas || [];
+      state.ventas.push({ id: ventaId, mes: currentMonth, tipo: "fondo", categoria: CAT_TRASPASO, cantidad: amt, nota: "a " + cat + (note ? " · " + note : ""), entryId: entryId, fecha: nuevaEntrada.fecha });
+    }
+    state.entries.push(nuevaEntrada);
     saveState();
     amtInput.value = ""; document.getElementById("investNote").value = "";
-    renderInvestCard(); renderHero(); renderHistory();
+    renderInvestCard(); renderEmergCard(); renderHero(); renderHistory();
   });
 
   document.getElementById("emergForm").addEventListener("submit", function(e){
@@ -1553,7 +1576,9 @@ body.auth-out header.top { display: none; }
     if (!id) return;
     state.entries.forEach(function(x){ if (x.id === id) aplicarSalidaCuenta(x.origen, x.cantidad); });
     state.entries = state.entries.filter(function(x){ return x.id !== id; });
-    saveState(); renderInvestCard(); renderHero(); renderHistory();
+    // Si era un traspaso desde el Fondo, el dinero vuelve al Fondo
+    state.ventas = (state.ventas || []).filter(function(v){ return v.entryId !== id; });
+    saveState(); renderInvestCard(); renderEmergCard(); renderHero(); renderHistory();
   });
   document.getElementById("emergEntries").addEventListener("click", function(e){
     var id = e.target.getAttribute("data-del-emerg");
@@ -1663,6 +1688,8 @@ body.auth-out header.top { display: none; }
         var vid = e.target.getAttribute("data-del-venta");
         if (!vid) return;
         state.ventas = (state.ventas || []).filter(function(x){ return x.id !== vid; });
+        // Si el retiro era un traspaso a Inversión, se borra también la inversión enlazada
+        state.entries = state.entries.filter(function(x){ return x.ventaId !== vid; });
         saveState(); renderInvestCard(); renderEmergCard(); renderHistory();
       });
     });
