@@ -19,9 +19,27 @@
     return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
   }
   function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  var MONEDAS = { EUR: "€", USD: "US$", GBP: "£", CHF: "CHF", MXN: "MX$", ARS: "AR$", COP: "COL$", CLP: "CLP$", PEN: "S/", BRL: "R$" };
+  function curSym(){ return MONEDAS[(typeof state !== "undefined" && state && state.moneda) || "EUR"] || "€"; }
+  var SYM_RE = /US\$|MX\$|AR\$|COL\$|CLP\$|R\$|S\/|CHF|€|£/g;
+  // Cambia el símbolo de moneda en etiquetas y textos de ayuda de los campos
+  function aplicarMoneda(){
+    var sym = curSym();
+    document.querySelectorAll(".cur, .eur").forEach(function(el){ if (el.textContent !== sym) el.textContent = sym; });
+    document.querySelectorAll("input[placeholder]").forEach(function(el){
+      var ph = el.getAttribute("placeholder");
+      if (!SYM_RE.test(ph)) return;
+      SYM_RE.lastIndex = 0;
+      var nuevo = ph.replace(SYM_RE, sym);
+      if (nuevo !== ph) el.setAttribute("placeholder", nuevo);
+    });
+    SYM_RE.lastIndex = 0;
+    var sel = document.getElementById("monedaSel");
+    if (sel && sel.value !== (state.moneda || "EUR")) sel.value = state.moneda || "EUR";
+  }
   function fmtEur(n){
     n = Math.round(n);
-    return n.toLocaleString("es-ES") + " €";
+    return n.toLocaleString("es-ES") + " " + curSym();
   }
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 
@@ -44,6 +62,7 @@
       gastosMensuales: null,   // para calcular cuántos meses cubre el fondo
       mesesMeta: 6,
       sim: null,               // {inicial, aporte, rent, anos} del simulador
+      moneda: "EUR",
       plan: []                 // aportación automática: {id, tipo: "invest"|"fondo", categoria, cantidad}
     };
   }
@@ -84,10 +103,65 @@
     if (lbl) lbl.textContent = label;
   }
 
+  // ---------- libro compartido en pareja ----------
+  var compartido = null;            // {id, version, codigo, miembros: [emails]} si eres miembro
+  var guardandoComp = false, pendienteComp = false;
+  function modoKey(){ return "libroModo-" + (currentUser ? currentUser.id : ""); }
+  function enCompartido(){
+    if (!compartido) return false;
+    try { return localStorage.getItem(modoKey()) !== "personal"; } catch(e){ return true; }
+  }
+  function etiquetaGuardado(){ return enCompartido() ? "guardado en el libro compartido" : "guardado en tu cuenta"; }
+  function guardarCompartido(){
+    if (guardandoComp){ pendienteComp = true; return; }
+    guardandoComp = true;
+    var copia = JSON.parse(JSON.stringify(state));
+    sb.rpc("guardar_libro_compartido", { p_id: compartido.id, p_data: copia, p_version: compartido.version }).then(function(res){
+      guardandoComp = false;
+      if (res.error){
+        if (/conflicto/.test(res.error.message || "")){
+          pendienteComp = false;
+          if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+          recargarCompartido().then(function(){
+            alert("Tu pareja guardó cambios a la vez que tú. Hemos cargado la versión más reciente: revisa tu último cambio y repítelo si no aparece.");
+          });
+        } else setSyncStatus(false, "sin conexión, guardado local");
+        return;
+      }
+      compartido.version = res.data;
+      setSyncStatus(true, etiquetaGuardado());
+      if (pendienteComp){ pendienteComp = false; guardarCompartido(); }
+    });
+  }
+  async function cargarCompartido(){
+    var r = await sb.from("libros_compartidos").select("data, version, codigo").eq("id", compartido.id).maybeSingle();
+    if (r.error || !r.data) throw (r.error || new Error("sin libro"));
+    var m = await sb.from("libro_miembros").select("email").eq("libro_id", compartido.id);
+    compartido.version = r.data.version;
+    compartido.codigo = r.data.codigo;
+    compartido.miembros = (m.data || []).map(function(x){ return x.email || ""; });
+    return mergeDefaults(r.data.data || {});
+  }
+  async function recargarCompartido(){
+    try { state = await cargarCompartido(); saveLocalState(); render(); setSyncStatus(true, etiquetaGuardado()); } catch(e){}
+  }
+  // Si tu pareja guarda algo, lo traemos (cada 20 s y al volver a la pestaña)
+  async function comprobarCambiosPareja(){
+    if (!sb || !currentUser || !enCompartido() || guardandoComp || document.hidden) return;
+    var r = await sb.from("libros_compartidos").select("version").eq("id", compartido.id).maybeSingle();
+    if (!r.error && r.data && r.data.version > compartido.version){
+      await recargarCompartido();
+      setSyncStatus(true, "actualizado con los cambios de tu pareja");
+    }
+  }
+  setInterval(comprobarCambiosPareja, 20000);
+  document.addEventListener("visibilitychange", comprobarCambiosPareja);
+
   // Guarda en Supabase (si hay sesión) y siempre deja una copia local de respaldo.
   function saveState(){
     saveLocalState();
     if (sb && currentUser){
+      if (enCompartido()){ guardarCompartido(); return; }
       sb.from(SUPABASE_TABLE)
         .upsert({ user_id: currentUser.id, data: state, updated_at: new Date().toISOString() })
         .then(function(res){
@@ -97,15 +171,26 @@
     }
   }
 
+  async function loadPersonal(user){
+    var res = await sb.from(SUPABASE_TABLE).select("data").eq("user_id", user.id).maybeSingle();
+    if (res.error) throw res.error;
+    if (res.data && res.data.data) return mergeDefaults(res.data.data);
+    var fresh = defaultState();
+    await sb.from(SUPABASE_TABLE).insert({ user_id: user.id, data: fresh });
+    return fresh;
+  }
   async function loadStateForUser(user){
     if (!sb) return loadLocalState();
     try {
-      var res = await sb.from(SUPABASE_TABLE).select("data").eq("user_id", user.id).maybeSingle();
-      if (res.error) throw res.error;
-      if (res.data && res.data.data) return mergeDefaults(res.data.data);
-      var fresh = defaultState();
-      await sb.from(SUPABASE_TABLE).insert({ user_id: user.id, data: fresh });
-      return fresh;
+      // ¿Es miembro de un libro compartido? (si la tabla aún no existe, se ignora)
+      compartido = null;
+      var mem = await sb.from("libro_miembros").select("libro_id").eq("user_id", user.id).maybeSingle();
+      if (!mem.error && mem.data) compartido = { id: mem.data.libro_id, version: 0, codigo: "", miembros: [] };
+      if (compartido){
+        var comp = await cargarCompartido();
+        if (enCompartido()) return comp;
+      }
+      return await loadPersonal(user);
     } catch (e) {
       setSyncStatus(false, "sin conexión, guardado local");
       return loadLocalState();
@@ -325,7 +410,7 @@
           '<span class="dot" style="background:' + categoryColor(c) + '"></span>' +
           '<span class="name">' + escapeHtml(c) + ' <span class="aport">· aportado ' + fmtEur(ap) + '</span>' +
           (Math.round(d) !== 0 ? ' <span class="gain ' + (d > 0 ? "up" : "down") + '">' + fmtGain(d, ap) + '</span>' : '') + '</span>' +
-          '<span class="val-input">€ <input type="number" min="0" step="0.01" data-valor-cat="' + escapeHtml(c) + '" value="' + (Math.round(val * 100) / 100) + '"></span>' +
+          '<span class="val-input"><span class="cur">' + curSym() + '</span> <input type="number" min="0" step="0.01" data-valor-cat="' + escapeHtml(c) + '" value="' + (Math.round(val * 100) / 100) + '"></span>' +
         '</div>';
       }).join("");
     }
@@ -381,6 +466,8 @@
   }
 
   function render(){
+    aplicarMoneda();
+    renderPareja();
     renderMonthBar();
     renderHero();
     renderInvestCard();
@@ -1064,6 +1151,11 @@
       document.getElementById("confirmYes").onclick = function(){ cerrar(); alConfirmar(); };
       document.addEventListener("keydown", onKey);
     }
+    // ---- Moneda ----
+    document.getElementById("monedaSel").addEventListener("change", function(){
+      if (!MONEDAS[this.value]) return;
+      state.moneda = this.value; saveState(); render();
+    });
     // ---- Meses de emergencia ----
     document.getElementById("gastosInput").addEventListener("input", function(){
       var v = this.value === "" ? null : parseFloat(this.value);
@@ -1315,7 +1407,7 @@
   }
   function fechaCorta(iso){ return iso ? String(iso).slice(0, 10) : ""; }
   document.getElementById("exportCsvBtn").addEventListener("click", function(){
-    var rows = [["Fecha", "Mes", "Tipo", "Categoría", "Origen", "Cantidad (€)", "Nota"]];
+    var rows = [["Fecha", "Mes", "Tipo", "Categoría", "Origen", "Cantidad (" + curSym() + ")", "Nota"]];
     var movs = [];
     state.entries.forEach(function(e){ movs.push([e.fecha, e.mes, "Inversión", e.categoria, origenLabel(e.origen), e.cantidad, e.nota]); });
     state.emergEntries.forEach(function(e){ movs.push([e.fecha, e.mes, "Fondo", e.categoria || "Aportación", origenLabel(e.origen), e.cantidad, e.nota]); });
@@ -1325,7 +1417,8 @@
     movs.forEach(function(m){ m[0] = fechaCorta(m[0]); rows.push(m); });
     rows.push([]);
     rows.push(["Resumen mensual"]);
-    rows.push(["Mes", "Inversión (€)", "Fondo (€)", "Total ahorrado (€)", "Ventas y retiros (€)"]);
+    var cs = " (" + curSym() + ")";
+    rows.push(["Mes", "Inversión" + cs, "Fondo" + cs, "Total ahorrado" + cs, "Ventas y retiros" + cs]);
     allMonthsWithData().forEach(function(m){
       var inv = investTotalMonth(m), em = emergTotalMonth(m);
       var out = sum(ventasDe("invest", m), "cantidad") + sum(ventasDe("fondo", m), "cantidad");
@@ -1348,6 +1441,81 @@
       alert("No se pudo exportar la copia en esta vista.");
     }
   });
+  // ---- Informe anual (se imprime o se guarda como PDF desde el navegador) ----
+  function anosConDatos(){
+    var set = {};
+    allMonthsWithData().forEach(function(m){ set[m.slice(0, 4)] = true; });
+    return Object.keys(set).sort().reverse();
+  }
+  function construirInforme(ano){
+    var meses = []; for (var i = 1; i <= 12; i++) meses.push(ano + "-" + String(i).padStart(2, "0"));
+    var tInv = 0, tFon = 0, tOut = 0, porCat = {}, porFon = {};
+    var filas = meses.map(function(m){
+      var inv = investTotalMonth(m), em = emergTotalMonth(m);
+      var out = sum(ventasDe("invest", m), "cantidad") + sum(ventasDe("fondo", m), "cantidad");
+      tInv += inv; tFon += em; tOut += out;
+      investEntriesForMonth(m).forEach(function(e){ porCat[e.categoria] = (porCat[e.categoria] || 0) + e.cantidad; });
+      emergEntriesForMonth(m).forEach(function(e){ var c = e.categoria || "Aportación"; porFon[c] = (porFon[c] || 0) + e.cantidad; });
+      return '<tr><td style="text-transform:capitalize">' + monthKeyToLabel(m) + '</td><td class="n">' + fmtEur(inv) + '</td><td class="n">' + fmtEur(em) + '</td><td class="n">' + fmtEur(inv + em) + '</td><td class="n">' + (out ? "−" + fmtEur(out) : "") + '</td></tr>';
+    }).join("");
+    var mesesConAhorro = meses.filter(function(m){ return investTotalMonth(m) + emergTotalMonth(m) > 0; }).length;
+    var tabla = function(obj){
+      var ks = Object.keys(obj).sort(function(a, b){ return obj[b] - obj[a]; });
+      if (!ks.length) return '<p>Sin aportaciones este año.</p>';
+      var tot = ks.reduce(function(a, k){ return a + obj[k]; }, 0);
+      return '<table><thead><tr><th>Categoría</th><th class="n">Aportado</th><th class="n">%</th></tr></thead><tbody>' +
+        ks.map(function(k){ return '<tr><td>' + escapeHtml(k) + '</td><td class="n">' + fmtEur(obj[k]) + '</td><td class="n">' + Math.round(obj[k] / tot * 100) + ' %</td></tr>'; }).join("") + '</tbody></table>';
+    };
+    var metas = state.metas || {}, mk = Object.keys(metas).filter(function(c){ return metas[c] && metas[c].objetivo > 0; });
+    var metasHtml = mk.length ? '<table><thead><tr><th>Meta</th><th class="n">Tienes</th><th class="n">Objetivo</th><th class="n">%</th></tr></thead><tbody>' + mk.map(function(c){
+      var t = Math.max(0, fondoCatSaldo(c));
+      return '<tr><td>' + escapeHtml(c) + (metas[c].fecha ? ' · ' + monthKeyToLabel(metas[c].fecha) : '') + '</td><td class="n">' + fmtEur(t) + '</td><td class="n">' + fmtEur(metas[c].objetivo) + '</td><td class="n">' + Math.min(100, Math.round(t / metas[c].objetivo * 100)) + ' %</td></tr>';
+    }).join("") + '</tbody></table>' : '<p>No tienes metas guardadas.</p>';
+    var aportado = catsConInversion().reduce(function(a, c){ return a + investHolding(c); }, 0), valor = totalValorInv();
+    var hoy = new Date();
+    document.getElementById("informe").innerHTML =
+      '<h1>Libro de Ahorro · Informe ' + ano + '</h1>' +
+      '<p class="inf-sub">Creado el ' + hoy.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) + '</p>' +
+      '<div class="inf-kpis">' +
+        '<div><span>Ahorrado en ' + ano + '</span><b>' + fmtEur(tInv + tFon) + '</b></div>' +
+        '<div><span>A inversión</span><b>' + fmtEur(tInv) + '</b></div>' +
+        '<div><span>Al fondo</span><b>' + fmtEur(tFon) + '</b></div>' +
+        '<div><span>Ventas y retiros</span><b>' + fmtEur(tOut) + '</b></div>' +
+        '<div><span>Media por mes con ahorro</span><b>' + fmtEur(mesesConAhorro ? (tInv + tFon) / mesesConAhorro : 0) + '</b></div>' +
+        '<div><span>Meses con ahorro</span><b>' + mesesConAhorro + ' de 12</b></div>' +
+      '</div>' +
+      '<h2>Mes a mes</h2><table><thead><tr><th>Mes</th><th class="n">Inversión</th><th class="n">Fondo</th><th class="n">Total</th><th class="n">Ventas y retiros</th></tr></thead><tbody>' + filas + '</tbody>' +
+        '<tfoot><tr><td>Total</td><td class="n">' + fmtEur(tInv) + '</td><td class="n">' + fmtEur(tFon) + '</td><td class="n">' + fmtEur(tInv + tFon) + '</td><td class="n">' + (tOut ? "−" + fmtEur(tOut) : "") + '</td></tr></tfoot></table>' +
+      '<h2>Inversión por categoría</h2>' + tabla(porCat) +
+      '<h2>Fondo por categoría</h2>' + tabla(porFon) +
+      '<h2>Situación actual</h2><table><tbody>' +
+        '<tr><td>Saldo en la cuenta</td><td class="n">' + fmtEur(state.saldoCuenta || 0) + '</td></tr>' +
+        '<tr><td>Inversiones (vale hoy)</td><td class="n">' + fmtEur(valor) + '</td></tr>' +
+        '<tr><td>Rentabilidad de las inversiones</td><td class="n">' + (aportado > 0 ? fmtGain(valor - aportado, aportado) : "—") + '</td></tr>' +
+        '<tr><td>Fondo</td><td class="n">' + fmtEur(emergFundTotal()) + '</td></tr>' +
+        '<tr><td><b>Total</b></td><td class="n"><b>' + fmtEur((state.saldoCuenta || 0) + valor + emergFundTotal()) + '</b></td></tr>' +
+      '</tbody></table>' +
+      '<h2>Metas de ahorro</h2>' + metasHtml +
+      '<p class="inf-foot">Informe generado con Libro de Ahorro a partir de los datos que has registrado.</p>';
+  }
+  document.getElementById("informeBtn").addEventListener("click", function(){
+    var sel = document.getElementById("informeAno");
+    var anos = anosConDatos();
+    sel.innerHTML = anos.map(function(a){ return '<option value="' + a + '">' + a + '</option>'; }).join("");
+    document.getElementById("informeBack").hidden = false;
+    sel.focus();
+  });
+  function cerrarInforme(){ document.getElementById("informeBack").hidden = true; }
+  document.getElementById("informeCancel").addEventListener("click", cerrarInforme);
+  document.getElementById("informeBack").addEventListener("click", function(e){ if (e.target === this) cerrarInforme(); });
+  document.getElementById("informeGo").addEventListener("click", function(){
+    var ano = document.getElementById("informeAno").value;
+    if (!/^\d{4}$/.test(ano)) return;
+    construirInforme(ano);
+    cerrarInforme();
+    setTimeout(function(){ window.print(); }, 100);
+  });
+
   // ---- Validar una copia importada: solo se aceptan datos con la forma esperada ----
   function validarCopia(raw){
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("formato");
@@ -1396,6 +1564,7 @@
         if (m && num(m.objetivo)) d.metas[k.slice(0, 80)] = { objetivo: num(m.objetivo), fecha: MES_RE.test(m.fecha) ? m.fecha : null };
       });
     }
+    if (typeof raw.moneda === "string" && MONEDAS[raw.moneda]) d.moneda = raw.moneda;
     d.gastosMensuales = raw.gastosMensuales == null ? null : num(raw.gastosMensuales);
     var mm = parseInt(raw.mesesMeta, 10); d.mesesMeta = mm >= 1 && mm <= 24 ? mm : 6;
     if (raw.sim && typeof raw.sim === "object"){
@@ -1431,6 +1600,91 @@
     e.target.value = "";
   });
 
+  // ---------- tarjeta "Libro en pareja" ----------
+  var ERR_PAREJA = {
+    ya_tienes_libro: "Ya formas parte de un libro compartido.",
+    codigo_no_valido: "Ese código no existe. Revisa que esté bien escrito.",
+    libro_completo: "Ese libro ya tiene dos personas.",
+    demasiado_grande: "Tus datos son demasiado grandes para compartirlos."
+  };
+  function errPareja(e){
+    var m = (e && e.message) || "";
+    for (var k in ERR_PAREJA) if (m.indexOf(k) >= 0) return ERR_PAREJA[k];
+    if (/function|does not exist|schema cache/i.test(m)) return "El libro compartido aún no está activado en el servidor.";
+    return "No se pudo completar. Inténtalo de nuevo.";
+  }
+  function renderPareja(){
+    var body = document.getElementById("parejaBody"), head = document.getElementById("parejaHead");
+    var pill = document.getElementById("modoPill");
+    if (pill) pill.hidden = !enCompartido();
+    if (!sb || !currentUser){
+      body.innerHTML = '<div class="empty-note">Inicia sesión para compartir tu libro con tu pareja.</div>';
+      head.textContent = ""; return;
+    }
+    if (!compartido){
+      head.textContent = "";
+      body.innerHTML = '<div class="pareja-box">' +
+        '<p>Lleva las cuentas con tu pareja: los dos veis y editáis el mismo libro, cada uno con su propia cuenta. Tu libro personal se queda guardado aparte.</p>' +
+        '<div class="pareja-row"><button type="button" class="pareja-btn" id="parejaCrear">Crear libro compartido con mis datos</button></div>' +
+        '<span class="pareja-or">o</span>' +
+        '<div class="pareja-row"><input type="text" id="parejaCodigo" maxlength="12" placeholder="Código de tu pareja" autocomplete="off"><button type="button" class="pareja-btn" id="parejaUnirme">Unirme</button></div>' +
+      '</div>';
+      return;
+    }
+    var viendo = enCompartido();
+    head.textContent = viendo ? "viendo el libro compartido" : "viendo tu libro personal";
+    var miembros = (compartido.miembros || []).filter(Boolean).map(escapeHtml).join(" y ");
+    body.innerHTML = '<div class="pareja-box">' +
+      '<p>Miembros: <b>' + (miembros || "—") + '</b></p>' +
+      ((compartido.miembros || []).length < 2 ?
+        '<p>Pasa este código a tu pareja para que se una desde su cuenta:</p><div class="pareja-row"><span class="pareja-code" id="parejaCodeTxt">' + escapeHtml(compartido.codigo || "") + '</span><button type="button" class="ghost-btn" id="parejaCopiar">Copiar código</button></div>' : '') +
+      '<div class="pareja-row">' +
+        (viendo ? '<button type="button" class="ghost-btn" id="parejaVerPersonal">Ver mi libro personal</button>' : '<button type="button" class="pareja-btn" id="parejaVerComp">Ver el libro compartido</button>') +
+        '<button type="button" class="ghost-btn" id="parejaSalir">Salir del libro compartido</button>' +
+      '</div>' +
+    '</div>';
+  }
+  function parejaMsg(t){ var el = document.getElementById("parejaMsg"); el.textContent = t; el.hidden = !t; }
+  async function cambiarModo(modo){
+    try { localStorage.setItem(modoKey(), modo); } catch(e){}
+    setSyncStatus(true, "cargando tus datos…");
+    state = await loadStateForUser(currentUser);
+    saveLocalState(); render();
+    setSyncStatus(true, etiquetaGuardado());
+  }
+  document.getElementById("parejaBody").addEventListener("click", async function(e){
+    var id = e.target.id;
+    if (!id || !sb || !currentUser) return;
+    parejaMsg("");
+    if (id === "parejaCrear"){
+      e.target.disabled = true;
+      var r = await sb.rpc("crear_libro_compartido", { p_data: JSON.parse(JSON.stringify(state)) });
+      if (r.error){ parejaMsg(errPareja(r.error)); e.target.disabled = false; return; }
+      await cambiarModo("compartido");
+    } else if (id === "parejaUnirme"){
+      var cod = (document.getElementById("parejaCodigo").value || "").trim().toUpperCase();
+      if (!/^[A-Z0-9]{4,12}$/.test(cod)){ parejaMsg("Escribe el código que te ha pasado tu pareja."); return; }
+      e.target.disabled = true;
+      var r2 = await sb.rpc("unirse_libro", { p_codigo: cod });
+      if (r2.error){ parejaMsg(errPareja(r2.error)); e.target.disabled = false; return; }
+      await cambiarModo("compartido");
+    } else if (id === "parejaCopiar"){
+      var t = compartido.codigo || "";
+      if (navigator.clipboard) navigator.clipboard.writeText(t).then(function(){ parejaMsg("Código copiado."); }, function(){ parejaMsg("Código: " + t); });
+      else parejaMsg("Código: " + t);
+    } else if (id === "parejaVerPersonal"){
+      await cambiarModo("personal");
+    } else if (id === "parejaVerComp"){
+      await cambiarModo("compartido");
+    } else if (id === "parejaSalir"){
+      if (!confirm("¿Salir del libro compartido? Volverás a tu libro personal. Si eres la última persona, el libro compartido se borrará.")) return;
+      var r3 = await sb.rpc("salir_libro");
+      if (r3.error){ parejaMsg(errPareja(r3.error)); return; }
+      compartido = null;
+      await cambiarModo("personal");
+    }
+  });
+
   // ---------- autenticación ----------
   function showAuthGate(){
     document.body.classList.add("auth-out");
@@ -1447,7 +1701,7 @@
     setSyncStatus(true, "cargando tus datos…");
     state = await loadStateForUser(user);
     saveLocalState();
-    setSyncStatus(true, "guardado en tu cuenta");
+    setSyncStatus(true, etiquetaGuardado());
     render();
   }
   function authMsg(text){
@@ -1551,6 +1805,7 @@
         if (!sameUser) showApp(session.user);
       } else {
         currentUser = null;
+        compartido = null;
         showAuthGate();
       }
     });
