@@ -794,7 +794,7 @@ body.auth-out header.top { display: none; }
   var sb = null;
   try {
     if (window.supabase && window.supabase.createClient) {
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: "libro-ahorro-auth" } });
     }
   } catch (e) { sb = null; }
 
@@ -1917,7 +1917,7 @@ body.auth-out header.top { display: none; }
       else if (!res.data.session) authMsg("Cuenta creada. Ya puedes iniciar sesión.");
     });
     document.getElementById("signOutBtn").addEventListener("click", async function(){
-      await sb.auth.signOut();
+      await sb.auth.signOut({ scope: "local" });
     });
 
     sb.auth.onAuthStateChange(function(event, session){
