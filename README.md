@@ -1,2 +1,2 @@
 # libro-ahorro
-Seguimiento de ahorro mensual: reparto entre inversin y fondo de emergencia
+Seguimiento de ahorro mensual: reparto entre inversion y fondo de emergencia
