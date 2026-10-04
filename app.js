@@ -40,7 +40,11 @@
       valorInversiones: {},    // cat -> {valor, base}: valor actual escrito y lo aportado en ese momento
       entradasFijas: [],       // {id, nombre, cantidad, desde, hasta}
       intereses: [],           // {id, mes, origen, cantidad, nota, fecha}
-      metas: {}                // categoría del fondo -> {objetivo, fecha: "YYYY-MM" | null}
+      metas: {},               // categoría del fondo -> {objetivo, fecha: "YYYY-MM" | null}
+      gastosMensuales: null,   // para calcular cuántos meses cubre el fondo
+      mesesMeta: 6,
+      sim: null,               // {inicial, aporte, rent, anos} del simulador
+      plan: []                 // aportación automática: {id, tipo: "invest"|"fondo", categoria, cantidad}
     };
   }
   function mergeDefaults(data){
@@ -253,6 +257,12 @@
     var keys = Array.prototype.map.call(sel.options, function(x){ return x.value; });
     // Mantiene lo que eligió la persona; si no eligió nada, usa la primera entrada con dinero
     if (sel.dataset.elegido === "1" && keys.indexOf(prev) >= 0) sel.value = prev;
+    else if (sel.id === "planOrigen"){
+      // El plan: primera entrada que tenga dinero suficiente; si ninguna, la cuenta
+      var need = sum(state.plan || [], "cantidad");
+      var buena = origenesDelMes(currentMonth).filter(function(o){ return o.entra != null && o.entra - o.usado > 0 && o.entra - o.usado >= need; })[0];
+      sel.value = buena ? buena.key : ORIGEN_CUENTA;
+    }
     else sel.selectedIndex = 0;
     if (!sel.dataset.escucha){ sel.dataset.escucha = "1"; sel.addEventListener("change", function(){ sel.dataset.elegido = "1"; }); }
   }
@@ -366,6 +376,8 @@
 
     fillOrigenSelect(document.getElementById("investOrigen"));
     fillOrigenSelect(document.getElementById("emergOrigen"));
+    renderPlan();
+    renderSim();
   }
 
   function render(){
@@ -537,6 +549,102 @@
     if (!(state.fondoCategorias || []).length) document.getElementById("emergNewCatRow").classList.add("show");
     renderFondoBreakdown();
     renderMetas();
+    renderCobertura();
+  }
+
+  // ---------- meses de emergencia cubiertos ----------
+  function renderCobertura(){
+    var g = state.gastosMensuales, meta = state.mesesMeta || 6, fondo = Math.max(0, emergFundTotal());
+    var gi = document.getElementById("gastosInput"), mi = document.getElementById("mesesMetaInput");
+    if (document.activeElement !== gi) gi.value = g ? g : "";
+    if (document.activeElement !== mi) mi.value = meta;
+    var box = document.getElementById("cobertura");
+    if (!g || g <= 0){ box.innerHTML = '<div class="empty-note">Escribe cuánto gastas al mes y te diremos cuántos meses podrías vivir con tu fondo.</div>'; return; }
+    var meses = fondo / g, objetivo = g * meta, pct = clamp(meses / meta * 100, 0, 100);
+    var texto = meses >= meta ? "¡Meta cumplida! Tu fondo cubre tus gastos de " + meta + " meses."
+      : "Te faltan " + fmtEur(objetivo - fondo) + " para cubrir " + meta + " meses.";
+    box.innerHTML = '<div class="meta-top"><span class="cob-big num">' + meses.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + ' meses</span>' +
+      '<span class="num">' + fmtEur(fondo) + ' / ' + fmtEur(objetivo) + '</span></div>' +
+      '<div class="progress-track"><div class="progress-fill emerg' + (meses >= meta ? " done" : "") + '" style="width:' + pct + '%"></div></div>' +
+      '<div class="meta-info">' + texto + '</div>';
+  }
+
+  // ---------- aportación automática (plan mensual) ----------
+  function planTotal(){ return sum(state.plan || [], "cantidad"); }
+  function planHecho(mes){
+    var f = function(e){ return e.mes === mes && e.plan; };
+    return state.entries.some(f) || state.emergEntries.some(f);
+  }
+  function renderPlan(){
+    var items = state.plan || [];
+    fillOrigenSelect(document.getElementById("planOrigen"));
+    document.getElementById("planTotalLabel").textContent = items.length ? fmtEur(planTotal()) + "/mes" : "";
+    document.getElementById("planItems").innerHTML = items.length ? items.map(function(it){
+      var color = it.tipo === "invest" ? categoryColor(it.categoria) : "var(--emerg)";
+      return '<div class="entry-row"><span class="dot" style="background:' + color + '"></span>' +
+        '<span class="entry-cat"><span class="name">' + escapeHtml(it.categoria) + '</span><span class="note"> · ' + (it.tipo === "invest" ? "Inversión" : "Fondo") + '</span></span>' +
+        '<span class="entry-amt num">' + fmtEur(it.cantidad) + '</span>' +
+        '<button class="entry-del" data-del-plan="' + it.id + '" aria-label="Eliminar">✕</button></div>';
+    }).join("") : '<div class="empty-note">Añade lo que quieres apartar cada mes, por ejemplo 200 € a ETF y 100 € a Imprevistos.</div>';
+    var tipo = document.getElementById("planTipo").value;
+    fillSelect(document.getElementById("planCat"), tipo === "invest" ? state.categorias : (state.fondoCategorias || []), false, "crea antes una categoría");
+    var btn = document.getElementById("planApplyBtn"), hecho = planHecho(currentMonth);
+    btn.disabled = !items.length || !!hecho;
+    btn.textContent = hecho ? "Plan de este mes ya registrado ✓" : "Registrar el plan de este mes (" + fmtEur(planTotal()) + ")";
+    document.getElementById("planOrigen").hidden = !items.length || !!hecho;
+  }
+
+  // ---------- simulador de interés compuesto ----------
+  function simDatos(){
+    var sv = state.sim || {};
+    var mediaAporte = (function(){
+      var meses = allMonthsWithData().filter(function(m){ return investTotalMonth(m) > 0; });
+      return meses.length ? Math.round(sum(state.entries, "cantidad") / meses.length) : 0;
+    })();
+    return {
+      inicial: sv.inicial != null ? sv.inicial : Math.round(totalValorInv()),
+      aporte: sv.aporte != null ? sv.aporte : (state.investObjetivo || mediaAporte || 100),
+      rent: sv.rent != null ? sv.rent : 5,
+      anos: sv.anos != null ? sv.anos : 10
+    };
+  }
+  function simular(d){
+    var r = Math.pow(1 + d.rent / 100, 1 / 12) - 1, v = d.inicial, puntos = [{ ano: 0, valor: v, aportado: d.inicial }];
+    for (var m = 1; m <= d.anos * 12; m++){
+      v = v * (1 + r) + d.aporte;
+      if (m % 12 === 0) puntos.push({ ano: m / 12, valor: v, aportado: d.inicial + d.aporte * m });
+    }
+    return puntos;
+  }
+  function renderSim(){
+    var d = simDatos();
+    [["simInicial", d.inicial], ["simAporte", d.aporte], ["simRent", d.rent], ["simAnos", d.anos]].forEach(function(x){
+      var el = document.getElementById(x[0]); if (document.activeElement !== el) el.value = x[1];
+    });
+    var pts = simular(d), fin = pts[pts.length - 1];
+    document.getElementById("simFinal").textContent = fmtEur(fin.valor);
+    document.getElementById("simAportado").textContent = fmtEur(fin.aportado);
+    document.getElementById("simIntereses").textContent = "+" + fmtEur(Math.max(0, fin.valor - fin.aportado));
+    document.getElementById("simHeadLabel").textContent = fmtEur(fin.valor) + " en " + d.anos + " años";
+    var svg = document.getElementById("simChart");
+    var W = 800, H = 220, padL = 64, padR = 16, padT = 14, padB = 30, plotW = W - padL - padR, plotH = H - padT - padB;
+    var maxV = Math.max(1, fin.valor) * 1.1, n = pts.length;
+    var x = function(i){ return padL + (n <= 1 ? plotW / 2 : plotW * i / (n - 1)); };
+    var y = function(v){ return padT + plotH - v / maxV * plotH; };
+    var parts = [];
+    for (var s2 = 0; s2 <= 4; s2++){
+      var gv = maxV / 4 * s2, gy = y(gv);
+      parts.push('<line class="gridline" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + gy + '" y2="' + gy + '"/>');
+      parts.push('<text x="' + (padL - 6) + '" y="' + (gy + 3) + '" text-anchor="end">' + Math.round(gv).toLocaleString("es-ES") + '</text>');
+    }
+    var area = function(key){ return 'M' + x(0) + ',' + y(0) + ' ' + pts.map(function(p, i){ return 'L' + x(i) + ',' + y(p[key]); }).join(' ') + ' L' + x(n - 1) + ',' + y(0) + ' Z'; };
+    parts.push('<path d="' + area("valor") + '" fill="var(--good)" opacity="0.22"/>');
+    parts.push('<path d="' + area("aportado") + '" fill="var(--accent)" opacity="0.35"/>');
+    parts.push('<polyline fill="none" stroke="var(--good)" stroke-width="2.5" points="' + pts.map(function(p, i){ return x(i) + ',' + y(p.valor); }).join(' ') + '"/>');
+    var cada = Math.max(1, Math.ceil(n / 10));
+    pts.forEach(function(p, i){ if (i % cada === 0 || i === n - 1) parts.push('<text x="' + x(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + p.ano + '</text>'); });
+    parts.push('<circle cx="' + x(n - 1) + '" cy="' + y(fin.valor) + '" r="4.5" fill="var(--good)"/>');
+    svg.innerHTML = parts.join("");
   }
 
   // ---------- metas de ahorro (por categoría del fondo) ----------
@@ -956,6 +1064,62 @@
       document.getElementById("confirmYes").onclick = function(){ cerrar(); alConfirmar(); };
       document.addEventListener("keydown", onKey);
     }
+    // ---- Meses de emergencia ----
+    document.getElementById("gastosInput").addEventListener("input", function(){
+      var v = this.value === "" ? null : parseFloat(this.value);
+      if (v != null && (isNaN(v) || v < 0)) return;
+      state.gastosMensuales = v; saveState(); renderCobertura();
+    });
+    document.getElementById("mesesMetaInput").addEventListener("input", function(){
+      var v = parseInt(this.value, 10);
+      if (isNaN(v) || v < 1 || v > 24) return;
+      state.mesesMeta = v; saveState(); renderCobertura();
+    });
+    // ---- Simulador ----
+    ["simInicial", "simAporte", "simRent", "simAnos"].forEach(function(id){
+      document.getElementById(id).addEventListener("input", function(){
+        var v = parseFloat(this.value);
+        var lim = { simInicial: 1e9, simAporte: 1e7, simRent: 30, simAnos: 60 }[id];
+        if (isNaN(v) || v < 0 || v > lim || (id === "simAnos" && v < 1)) return;
+        var d = simDatos();
+        d[{ simInicial: "inicial", simAporte: "aporte", simRent: "rent", simAnos: "anos" }[id]] = id === "simAnos" ? Math.round(v) : v;
+        state.sim = d; saveState(); renderSim();
+      });
+    });
+    // ---- Aportación automática ----
+    document.getElementById("planTipo").addEventListener("change", renderPlan);
+    document.getElementById("planForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var tipo = document.getElementById("planTipo").value, cat = document.getElementById("planCat").value;
+      var amt = parseFloat(document.getElementById("planAmt").value);
+      if (!cat || isNaN(amt) || amt <= 0) return;
+      state.plan = state.plan || [];
+      var ya = state.plan.filter(function(p){ return p.tipo === tipo && p.categoria === cat; })[0];
+      if (ya) ya.cantidad = amt; else state.plan.push({ id: uid(), tipo: tipo, categoria: cat, cantidad: amt });
+      document.getElementById("planAmt").value = "";
+      saveState(); renderPlan();
+    });
+    document.getElementById("planItems").addEventListener("click", function(e){
+      var id = e.target.getAttribute("data-del-plan");
+      if (!id) return;
+      state.plan = (state.plan || []).filter(function(p){ return p.id !== id; });
+      saveState(); renderPlan();
+    });
+    document.getElementById("planApplyBtn").addEventListener("click", function(){
+      var items = state.plan || [];
+      if (!items.length || planHecho(currentMonth)) return;
+      var origen = document.getElementById("planOrigen").value, total = planTotal();
+      var falta = faltaDinero(origen, total);
+      if (falta){ showLimitMsg("planMsg", falta); return; }
+      hideLimitMsg("planMsg");
+      var fecha = new Date().toISOString();
+      items.forEach(function(it){
+        var e2 = { id: uid(), mes: currentMonth, categoria: it.categoria, cantidad: it.cantidad, nota: "Plan mensual", origen: origen, fecha: fecha, plan: true };
+        if (it.tipo === "invest") state.entries.push(e2); else state.emergEntries.push(e2);
+      });
+      aplicarSalidaCuenta(origen, -total);
+      saveState(); render();
+    });
     document.getElementById("metaForm").addEventListener("submit", function(e){
       e.preventDefault();
       var cat = document.getElementById("metaCat").value;
@@ -1203,6 +1367,7 @@
       if (e.ventaId) o.ventaId = txt(e.ventaId, 40);
       if (e.entryId) o.entryId = txt(e.entryId, 40);
       if (e.tipo === "invest" || e.tipo === "fondo") o.tipo = e.tipo;
+      if (e.plan === true) o.plan = true;
       return o;
     }
     var d = defaultState();
@@ -1231,6 +1396,16 @@
         if (m && num(m.objetivo)) d.metas[k.slice(0, 80)] = { objetivo: num(m.objetivo), fecha: MES_RE.test(m.fecha) ? m.fecha : null };
       });
     }
+    d.gastosMensuales = raw.gastosMensuales == null ? null : num(raw.gastosMensuales);
+    var mm = parseInt(raw.mesesMeta, 10); d.mesesMeta = mm >= 1 && mm <= 24 ? mm : 6;
+    if (raw.sim && typeof raw.sim === "object"){
+      var sm = { inicial: num(raw.sim.inicial), aporte: num(raw.sim.aporte), rent: num(raw.sim.rent), anos: num(raw.sim.anos) };
+      if (sm.inicial != null && sm.aporte != null && sm.rent != null && sm.rent <= 30 && sm.anos >= 1 && sm.anos <= 60) d.sim = sm;
+    }
+    d.plan = lista(raw.plan, function(it){
+      if (!it || (it.tipo !== "invest" && it.tipo !== "fondo") || !num(it.cantidad)) return null;
+      return { id: txt(it.id, 40) || uid(), tipo: it.tipo, categoria: txt(it.categoria, 80), cantidad: num(it.cantidad) };
+    }).slice(0, 50);
     return d;
   }
   document.getElementById("importBtn").addEventListener("click", function(){
