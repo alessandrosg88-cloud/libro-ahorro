@@ -1,4 +1,5 @@
-Añadir pwa.js  if ("serviceWorker" in navigator && location.protocol === "https:") {
+(function(){
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
     window.addEventListener("load", function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
   }
   var bar = document.querySelector(".lang-bar");
