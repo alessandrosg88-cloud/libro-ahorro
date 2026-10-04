@@ -184,6 +184,39 @@
     "Aportado por ti": ["Versato da te", "Contributed by you"],
     "Ganado con intereses": ["Guadagnato con gli interessi", "Earned from interest"],
     "Es una estimación: supone la misma rentabilidad todos los años, sin comisiones ni impuestos. La rentabilidad real sube y baja.": ["È una stima: presuppone lo stesso rendimento ogni anno, senza commissioni né tasse. Il rendimento reale sale e scende.", "This is an estimate: it assumes the same return every year, with no fees or taxes. Real returns go up and down."],
+    "Moneda": ["Valuta", "Currency"],
+    "Informe anual (PDF)": ["Rapporto annuale (PDF)", "Annual report (PDF)"],
+    "Informe anual": ["Rapporto annuale", "Annual report"],
+    "Elige el año. Se abrirá la ventana de imprimir: elige «Guardar como PDF».": ["Scegli l'anno. Si aprirà la finestra di stampa: scegli «Salva come PDF».", "Choose the year. The print window will open: choose «Save as PDF»."],
+    "Crear informe": ["Crea rapporto", "Create report"],
+    "Libro en pareja": ["Libro di coppia", "Shared with partner"],
+    "libro compartido": ["libro condiviso", "shared book"],
+    "Inicia sesión para compartir tu libro con tu pareja.": ["Accedi per condividere il libro con il tuo partner.", "Sign in to share your book with your partner."],
+    "Lleva las cuentas con tu pareja: los dos veis y editáis el mismo libro, cada uno con su propia cuenta. Tu libro personal se queda guardado aparte.": ["Tieni i conti con il tuo partner: entrambi vedete e modificate lo stesso libro, ognuno con il proprio account. Il tuo libro personale resta salvato a parte.", "Keep the books with your partner: you both see and edit the same book, each with your own account. Your personal book stays saved separately."],
+    "Crear libro compartido con mis datos": ["Crea libro condiviso con i miei dati", "Create shared book with my data"],
+    "o": ["o", "or"],
+    "Código de tu pareja": ["Codice del tuo partner", "Your partner's code"],
+    "Unirme": ["Unisciti", "Join"],
+    "Miembros:": ["Membri:", "Members:"],
+    "Pasa este código a tu pareja para que se una desde su cuenta:": ["Passa questo codice al tuo partner perché si unisca dal suo account:", "Give this code to your partner so they can join from their account:"],
+    "Copiar código": ["Copia codice", "Copy code"],
+    "Código copiado.": ["Codice copiato.", "Code copied."],
+    "Ver mi libro personal": ["Vedi il mio libro personale", "View my personal book"],
+    "Ver el libro compartido": ["Vedi il libro condiviso", "View the shared book"],
+    "Salir del libro compartido": ["Esci dal libro condiviso", "Leave the shared book"],
+    "viendo el libro compartido": ["stai vedendo il libro condiviso", "viewing the shared book"],
+    "viendo tu libro personal": ["stai vedendo il tuo libro personale", "viewing your personal book"],
+    "guardado en el libro compartido": ["salvato nel libro condiviso", "saved to the shared book"],
+    "actualizado con los cambios de tu pareja": ["aggiornato con le modifiche del tuo partner", "updated with your partner's changes"],
+    "Ya formas parte de un libro compartido.": ["Fai già parte di un libro condiviso.", "You're already part of a shared book."],
+    "Ese código no existe. Revisa que esté bien escrito.": ["Questo codice non esiste. Controlla che sia scritto bene.", "That code doesn't exist. Check it's typed correctly."],
+    "Ese libro ya tiene dos personas.": ["Questo libro ha già due persone.", "That book already has two people."],
+    "Tus datos son demasiado grandes para compartirlos.": ["I tuoi dati sono troppo grandi per essere condivisi.", "Your data is too large to share."],
+    "El libro compartido aún no está activado en el servidor.": ["Il libro condiviso non è ancora attivo sul server.", "The shared book isn't enabled on the server yet."],
+    "No se pudo completar. Inténtalo de nuevo.": ["Impossibile completare. Riprova.", "Couldn't complete that. Please try again."],
+    "Escribe el código que te ha pasado tu pareja.": ["Scrivi il codice che ti ha dato il tuo partner.", "Enter the code your partner gave you."],
+    "¿Salir del libro compartido? Volverás a tu libro personal. Si eres la última persona, el libro compartido se borrará.": ["Uscire dal libro condiviso? Tornerai al tuo libro personale. Se sei l'ultima persona, il libro condiviso verrà eliminato.", "Leave the shared book? You'll go back to your personal book. If you're the last person, the shared book will be deleted."],
+    "Tu pareja guardó cambios a la vez que tú. Hemos cargado la versión más reciente: revisa tu último cambio y repítelo si no aparece.": ["Il tuo partner ha salvato modifiche insieme a te. Abbiamo caricato la versione più recente: controlla la tua ultima modifica e ripetila se non compare.", "Your partner saved changes at the same time as you. We've loaded the latest version: check your last change and redo it if it's missing."],
     "Instalar app": ["Installa app", "Install app"],
     "Eliminar mi cuenta y mis datos": ["Elimina il mio account e i miei dati", "Delete my account and data"],
     "Esto borrará para siempre tu cuenta y todos tus datos. Para confirmar, escribe ELIMINAR": ["Questo cancellerà per sempre il tuo account e tutti i tuoi dati. Per confermare, scrivi ELIMINAR", "This will permanently delete your account and all your data. To confirm, type ELIMINAR"],
@@ -330,6 +363,8 @@
   window.alert = function(m){ return _alert.call(window, tr(String(m))); };
   var _prompt = window.prompt;
   window.prompt = function(m, d){ return _prompt.call(window, tr(String(m)), d); };
+  var _confirm = window.confirm;
+  window.confirm = function(m){ return _confirm.call(window, tr(String(m))); };
 
   label();
   apply();
