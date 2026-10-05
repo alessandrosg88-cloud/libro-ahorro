@@ -344,7 +344,12 @@ body.auth-out header.top { display: none; }
     display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
   }
   .foot-note { font-size: 0.75rem; color: var(--ink-mute); max-width: 480px; line-height: 1.5; }
-  .foot-actions { display: flex; gap: 8px; }
+  .foot-actions { display: flex; flex-wrap: wrap; gap: 8px; max-width: 100%; }
+  @media (max-width: 600px) {
+    .foot-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+    .foot-actions .cur-pick { grid-column: 1 / -1; }
+    .foot-actions .ghost-btn { width: 100%; white-space: normal; padding: 9px 8px; }
+  }
   .ghost-btn {
     font-family: inherit; font-size: 0.78rem; padding: 7px 13px; border-radius: 8px;
     border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); cursor: pointer;
