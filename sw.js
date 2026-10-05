@@ -1,7 +1,7 @@
 // Service worker del Libro de Ahorro: permite instalar la app y abrirla sin conexión.
 // Solo guarda en caché los archivos de la propia web; los datos de tu cuenta
 // (Supabase) nunca se guardan aquí, siempre van directos por internet.
-var CACHE = "libro-ahorro-v6";
+var CACHE = "libro-ahorro-v7";
 var ARCHIVOS = [
   "./",
   "index.html",
