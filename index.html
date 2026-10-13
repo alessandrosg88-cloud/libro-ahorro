@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://nhhskvauwdudhojjvodi.supabase.co wss://nhhskvauwdudhojjvodi.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://nhhskvauwdudhojjvodi.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <style>:root{color-scheme:light}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none !important}</style>
 <title>Libro de Ahorro</title>
@@ -918,7 +918,7 @@ body.auth-out header.top { display: none; }
 </div>
 <section id="informe" aria-hidden="true"></section>
 
-<script src="supabase.min.js"></script>
+<script src="nube.js"></script>
 <script src="app.js"></script>
 <!-- Confirmación para eliminar -->
 <div id="confirmModal" class="modal-back" hidden>

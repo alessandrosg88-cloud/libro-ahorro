@@ -73,17 +73,101 @@
     return data;
   }
 
-  // ---------- storage: Supabase (per-account), with a localStorage cache ----------
-  var SUPABASE_URL = "https://nhhskvauwdudhojjvodi.supabase.co";
-  var SUPABASE_KEY = "sb_publishable_0EouCOgtpq146qgFsMusDg_bvQh58MI";
-  var SUPABASE_TABLE = "libro_ahorro";
+  // ---------- storage: Google Firebase (proyecto propio del Libro de ahorro), con copia local ----------
+  // Es un proyecto distinto al de «Mi presupuesto»: cada app tiene sus propias cuentas y sesiones.
+  var SUPABASE_TABLE = "libro_ahorro";   // nombre del documento con tu libro personal
+
+  // Libro compartido en pareja, guardado en Firestore (colecciones «libros» y «codigos»).
+  var nubeLibro = {
+    buscar: async function(fs){
+      var docs = await fs.runQuery({ from: [{ collectionId: "libros" }], where: { fieldFilter: { field: { fieldPath: "miembros" }, op: "ARRAY_CONTAINS", value: { stringValue: fs.uid() } } }, limit: 1 });
+      return docs[0] ? fs.decRow(docs[0]) : null;
+    },
+    leer: function(fs, id){ return fs.getDoc("libros/" + id); },
+    guardar: async function(fs, id, data, version){
+      var raw = await fs.getRaw("libros/" + id);
+      if (!raw) throw new Error("sin libro");
+      if (fs.decRow(raw).version !== version) throw new Error("conflicto");
+      var txt = JSON.stringify(data);
+      if (txt.length > 900000) throw new Error("demasiado_grande");
+      try {
+        await fs.commit([{ update: { name: fs.name("libros/" + id), fields: { data_json: { stringValue: txt }, version: fs.enc(version + 1), updated_at: { stringValue: new Date().toISOString() } } }, updateMask: { fieldPaths: ["data_json", "version", "updated_at"] }, currentDocument: { updateTime: raw.updateTime } }]);
+      } catch (e) { if (e.code === "FAILED_PRECONDITION") throw new Error("conflicto"); throw e; }
+      return version + 1;
+    },
+    crear: async function(fs, data){
+      if (await nubeLibro.buscar(fs)) throw new Error("ya_tienes_libro");
+      if (JSON.stringify(data).length > 900000) throw new Error("demasiado_grande");
+      var id = fs.randomId();
+      await fs.setDoc("libros/" + id, { miembros: [fs.uid()], emails: [fs.email()], data: data, version: 1, codigo: "" });
+      var letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", cod = "";
+      for (var intento = 0; intento < 5; intento++) {
+        cod = "";
+        var rnd = new Uint32Array(8); crypto.getRandomValues(rnd);
+        for (var i = 0; i < 8; i++) cod += letras[rnd[i] % letras.length];
+        try { await fs.commit([{ update: { name: fs.name("codigos/" + cod), fields: fs.encRow({ libro: id }) }, currentDocument: { exists: false } }]); break; }
+        catch (e) { if (intento === 4) throw e; }
+      }
+      await fs.mergeDoc("libros/" + id, { codigo: cod });
+      return id;
+    },
+    unirse: async function(fs, cod){
+      if (await nubeLibro.buscar(fs)) throw new Error("ya_tienes_libro");
+      var c = await fs.getDoc("codigos/" + cod);
+      if (!c || !c.libro) throw new Error("codigo_no_valido");
+      try {
+        await fs.commit([{ transform: { document: fs.name("libros/" + c.libro), fieldTransforms: [
+          { fieldPath: "miembros", appendMissingElements: { values: [{ stringValue: fs.uid() }] } },
+          { fieldPath: "emails", appendMissingElements: { values: [{ stringValue: fs.email() }] } } ] }, currentDocument: { exists: true } }]);
+      } catch (e) {
+        if (e.code === "PERMISSION_DENIED") throw new Error("libro_completo");
+        if (e.code === "NOT_FOUND") throw new Error("codigo_no_valido");
+        throw e;
+      }
+    },
+    salir: async function(fs){
+      var lib = await nubeLibro.buscar(fs);
+      if (!lib) return;
+      if ((lib.miembros || []).length <= 1) {
+        if (lib.codigo) { try { await fs.delDoc("codigos/" + lib.codigo); } catch (e) {} }
+        await fs.delDoc("libros/" + lib.id);
+      } else {
+        await fs.commit([{ transform: { document: fs.name("libros/" + lib.id), fieldTransforms: [
+          { fieldPath: "miembros", removeAllFromArray: { values: [{ stringValue: fs.uid() }] } },
+          { fieldPath: "emails", removeAllFromArray: { values: [{ stringValue: fs.email() }] } } ] } }]);
+      }
+    }
+  };
+  function rpcNube(fn){
+    return Promise.resolve().then(fn).then(function(d){ return { data: d, error: null }; }, function(e){ return { data: null, error: { message: (e && e.message) || "error" } }; });
+  }
+  // Cuentas antiguas de Supabase: la primera vez que entras se copian tus datos a Firebase.
+  async function importarDeSupabase(fs, old){
+    var uid = fs.uid(), sid = encodeURIComponent(old.legacyUser.id);
+    var p = await old.get("libro_ahorro?select=data&user_id=eq." + sid);
+    if (p[0] && p[0].data) await fs.setDoc("users/" + uid + "/tablas/" + SUPABASE_TABLE, { user_id: uid, data: p[0].data, updated_at: new Date().toISOString() });
+    var mem = [];
+    try { mem = await old.get("libro_miembros?select=libro_id&user_id=eq." + sid); } catch (e) {}
+    if (mem && mem[0]) {
+      var lib = await old.get("libros_compartidos?select=data&id=eq." + encodeURIComponent(mem[0].libro_id));
+      if (lib[0] && lib[0].data && !(await nubeLibro.buscar(fs))) await nubeLibro.crear(fs, lib[0].data);
+    }
+  }
 
   var sb = null;
   try {
-    if (window.supabase && window.supabase.createClient) {
-      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: "libro-ahorro-auth" } });
+    if (window.crearNube) {
+      sb = window.crearNube({
+        apiKey: "AIzaSyAWUJ9oLmCyyC2nnycRZXjnvH03AajQ6sA",
+        projectId: "libro-ahorro",
+        storageKey: "libro-ahorro-firebase-auth",
+        single: [SUPABASE_TABLE],
+        legacy: { url: "https://nhhskvauwdudhojjvodi.supabase.co", key: "sb_publishable_0EouCOgtpq146qgFsMusDg_bvQh58MI", importar: importarDeSupabase }
+      });
     }
   } catch (e) { sb = null; }
+  // Al pasar a Firebase, se borra la sesión antigua de Supabase guardada en este navegador.
+  try { localStorage.removeItem("libro-ahorro-auth"); } catch (e) {}
 
   var currentUser = null;
 
@@ -116,7 +200,8 @@
     if (guardandoComp){ pendienteComp = true; return; }
     guardandoComp = true;
     var copia = JSON.parse(JSON.stringify(state));
-    sb.rpc("guardar_libro_compartido", { p_id: compartido.id, p_data: copia, p_version: compartido.version }).then(function(res){
+    var comp = compartido;
+    rpcNube(function(){ return nubeLibro.guardar(sb.fs, comp.id, copia, comp.version); }).then(function(res){
       guardandoComp = false;
       if (res.error){
         if (/conflicto/.test(res.error.message || "")){
@@ -134,13 +219,12 @@
     });
   }
   async function cargarCompartido(){
-    var r = await sb.from("libros_compartidos").select("data, version, codigo").eq("id", compartido.id).maybeSingle();
-    if (r.error || !r.data) throw (r.error || new Error("sin libro"));
-    var m = await sb.from("libro_miembros").select("email").eq("libro_id", compartido.id);
-    compartido.version = r.data.version;
-    compartido.codigo = r.data.codigo;
-    compartido.miembros = (m.data || []).map(function(x){ return x.email || ""; });
-    return mergeDefaults(r.data.data || {});
+    var d = await nubeLibro.leer(sb.fs, compartido.id);
+    if (!d) throw new Error("sin libro");
+    compartido.version = d.version;
+    compartido.codigo = d.codigo || "";
+    compartido.miembros = (d.emails || []).slice();
+    return mergeDefaults(d.data || {});
   }
   async function recargarCompartido(){
     try { state = await cargarCompartido(); saveLocalState(); render(); setSyncStatus(true, etiquetaGuardado()); } catch(e){}
@@ -148,8 +232,8 @@
   // Si tu pareja guarda algo, lo traemos (cada 20 s y al volver a la pestaña)
   async function comprobarCambiosPareja(){
     if (!sb || !currentUser || !enCompartido() || guardandoComp || document.hidden) return;
-    var r = await sb.from("libros_compartidos").select("version").eq("id", compartido.id).maybeSingle();
-    if (!r.error && r.data && r.data.version > compartido.version){
+    var r = await rpcNube(function(){ return nubeLibro.leer(sb.fs, compartido.id); });
+    if (!r.error && r.data && compartido && r.data.version > compartido.version){
       await recargarCompartido();
       setSyncStatus(true, "actualizado con los cambios de tu pareja");
     }
@@ -184,8 +268,8 @@
     try {
       // ¿Es miembro de un libro compartido? (si la tabla aún no existe, se ignora)
       compartido = null;
-      var mem = await sb.from("libro_miembros").select("libro_id").eq("user_id", user.id).maybeSingle();
-      if (!mem.error && mem.data) compartido = { id: mem.data.libro_id, version: 0, codigo: "", miembros: [] };
+      var mem = await rpcNube(function(){ return nubeLibro.buscar(sb.fs); });
+      if (!mem.error && mem.data) compartido = { id: mem.data.id, version: 0, codigo: "", miembros: [] };
       if (compartido){
         var comp = await cargarCompartido();
         if (enCompartido()) return comp;
@@ -1658,14 +1742,15 @@
     parejaMsg("");
     if (id === "parejaCrear"){
       e.target.disabled = true;
-      var r = await sb.rpc("crear_libro_compartido", { p_data: JSON.parse(JSON.stringify(state)) });
+      var copiaLibro = JSON.parse(JSON.stringify(state));
+      var r = await rpcNube(function(){ return nubeLibro.crear(sb.fs, copiaLibro); });
       if (r.error){ parejaMsg(errPareja(r.error)); e.target.disabled = false; return; }
       await cambiarModo("compartido");
     } else if (id === "parejaUnirme"){
       var cod = (document.getElementById("parejaCodigo").value || "").trim().toUpperCase();
       if (!/^[A-Z0-9]{4,12}$/.test(cod)){ parejaMsg("Escribe el código que te ha pasado tu pareja."); return; }
       e.target.disabled = true;
-      var r2 = await sb.rpc("unirse_libro", { p_codigo: cod });
+      var r2 = await rpcNube(function(){ return nubeLibro.unirse(sb.fs, cod); });
       if (r2.error){ parejaMsg(errPareja(r2.error)); e.target.disabled = false; return; }
       await cambiarModo("compartido");
     } else if (id === "parejaCopiar"){
@@ -1678,7 +1763,7 @@
       await cambiarModo("compartido");
     } else if (id === "parejaSalir"){
       if (!confirm("¿Salir del libro compartido? Volverás a tu libro personal. Si eres la última persona, el libro compartido se borrará.")) return;
-      var r3 = await sb.rpc("salir_libro");
+      var r3 = await rpcNube(function(){ return nubeLibro.salir(sb.fs); });
       if (r3.error){ parejaMsg(errPareja(r3.error)); return; }
       compartido = null;
       await cambiarModo("personal");
@@ -1780,12 +1865,16 @@
       var escrito = prompt("Esto borrará para siempre tu cuenta y todos tus datos. Para confirmar, escribe ELIMINAR");
       if (escrito == null) return;
       if (escrito.trim().toUpperCase() !== "ELIMINAR"){ alert("No se ha borrado nada."); return; }
-      var res = await sb.rpc("eliminar_mi_cuenta");
-      if (res.error){
-        // Si la función aún no existe en Supabase, al menos borramos los datos guardados
-        var del = await sb.from(SUPABASE_TABLE).delete().eq("user_id", currentUser.id);
-        if (del.error){ alert("No se pudo borrar la cuenta. Inténtalo más tarde."); return; }
-      }
+      var uidBorrar = currentUser.id;
+      var res = await rpcNube(async function(){
+        try { await nubeLibro.salir(sb.fs); } catch (e) {}
+        await sb.fs.delDoc("users/" + uidBorrar + "/tablas/" + SUPABASE_TABLE);
+        // Se deja solo una marca vacía para no volver a copiar los datos antiguos de Supabase.
+        await sb.fs.setDoc("users/" + uidBorrar, { migrado: "cuenta-borrada" });
+        var d = await sb.auth.deleteUser();
+        if (d.error) throw new Error(d.error.message);
+      });
+      if (res.error){ alert("Tus datos se han borrado, pero no se pudo borrar la cuenta: " + res.error.message); return; }
       try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
       state = defaultState();
       alert("Tu cuenta y tus datos se han eliminado.");
