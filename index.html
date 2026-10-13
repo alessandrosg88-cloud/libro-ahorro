@@ -6,7 +6,9 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://nhhskvauwdudhojjvodi.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <style>:root{color-scheme:light}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none !important}</style>
-<title>Libro de Ahorro</title>
+<title>CapitalNido</title>
+<meta name="application-name" content="CapitalNido">
+<meta name="apple-mobile-web-app-title" content="CapitalNido">
 <meta name="description" content="Seguimiento de ahorro mensual: reparto entre inversión y fondo de emergencia.">
 <meta name="theme-color" content="#1f5c4d">
 <link rel="manifest" href="manifest.webmanifest">
@@ -177,9 +179,11 @@ body.auth-out header.top { display: none; }
     margin-bottom: 28px;
     flex-wrap: wrap;
   }
-  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
   .brand h1 { font-size: 1.5rem; letter-spacing: -0.01em; }
-  .brand .mark { font-size: 1.5rem; }
+  .brand .mark { width: 40px; height: 40px; border-radius: 10px; align-self: center; flex: none; }
+  .auth-hero .brand .mark { width: 64px; height: 64px; border-radius: 16px; }
+  .brand .cn-a { color: #1d3352; } .brand .cn-b { color: #1f8a57; }
   .top-sub { color: var(--ink-mute); font-size: 0.85rem; margin: 4px 0 0; }
   .theme-note { font-size: 0.75rem; color: var(--ink-mute); text-align: right; max-width: 240px; line-height: 1.4; }
   .sync-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; background: var(--ink-mute); }
@@ -484,7 +488,7 @@ body.auth-out header.top { display: none; }
 
   <header class="top">
     <div>
-      <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
+      <div class="brand"><img class="mark" src="logo.png" alt="" width="40" height="40"><h1><span class="cn-a">Capital</span><span class="cn-b">Nido</span></h1></div>
       <p class="top-sub" id="topSub">Tú decides cuánto ahorras cada mes y cómo lo repartes.</p>
     </div>
     <div style="text-align:right">
@@ -499,7 +503,7 @@ body.auth-out header.top { display: none; }
 
   <div id="authGate" class="auth-cover" hidden>
     <div class="auth-hero">
-      <div class="brand"><span class="mark">📒</span><h1>Libro de Ahorro</h1></div>
+      <div class="brand"><img class="mark" src="logo.png" alt="" width="40" height="40"><h1><span class="cn-a">Capital</span><span class="cn-b">Nido</span></h1></div>
       <p class="auth-lead">Tú decides cuánto ahorras cada mes y cómo lo repartes entre inversión y fondo.</p>
       <ul class="auth-points">
         <li>Fija tu objetivo de ahorro mensual</li>
@@ -511,7 +515,7 @@ body.auth-out header.top { display: none; }
     <div class="card-head">
       <h2 id="authHeading">Inicia sesión</h2>
     </div>
-    <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.</p>
+    <p style="color:var(--ink-mute);font-size:0.85rem;margin:0">Te pedimos tu correo solo para crear tu cuenta y guardar tus datos en CapitalNido de forma segura, así puedes verlos desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.</p>
     <p style="font-size:0.75rem;margin:0;color:var(--ink-mute)">Al crear una cuenta aceptas los términos de uso y la política de privacidad.<br><a href="terminos.html" style="color:var(--accent)">Términos de uso</a> · <a href="privacidad.html" style="color:var(--accent)">Privacidad y cookies</a> · <a href="terminos.html" style="color:var(--accent)">Términos de uso y aviso legal</a></p>
     <form id="authForm" style="display:flex;flex-direction:column;gap:10px">
       <input type="email" id="authEmail" placeholder="Correo electrónico" autocomplete="email" required style="font-family:inherit;font-size:0.9rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);color:var(--ink)">

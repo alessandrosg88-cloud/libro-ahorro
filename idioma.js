@@ -3,7 +3,7 @@
   var NAMES = { es: "Español", it: "Italiano", en: "English" };
   // español: [italiano, inglés]
   var T = {
-    "Libro de Ahorro": ["Libro dei Risparmi", "Savings Book"],
+    "CapitalNido": ["CapitalNido", "CapitalNido"],
     "Tu dinero hoy": ["I tuoi soldi oggi", "Your money today"],
     "Cuenta": ["Conto", "Account"],
     "Inversiones (valor actual)": ["Investimenti (valore attuale)", "Investments (current value)"],
@@ -60,7 +60,7 @@
     "Guardado en tu cuenta: entra desde cualquier dispositivo": ["Salvato nel tuo account: accedi da qualsiasi dispositivo", "Saved to your account: sign in from any device"],
     "Inicia sesión": ["Accedi", "Sign in"],
     "Iniciar sesión": ["Accedi", "Sign in"],
-    "Te pedimos tu correo solo para crear tu cuenta y guardar tu Libro de Ahorro de forma segura, así puedes verlo desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.": ["Ti chiediamo l'email solo per creare il tuo account e salvare il tuo Libro dei Risparmi in modo sicuro, così puoi vederlo da qualsiasi dispositivo. Non la usiamo per nient'altro. La sessione resta attiva su questo dispositivo finché non premi «Esci»; te la richiederemo solo se la sessione scade o se esci.", "We only ask for your email to create your account and keep your Savings Book safe, so you can see it from any device. We don't use it for anything else. You stay signed in on this device until you press «Sign out»; we'll only ask again if your session expires or you sign out."],
+    "Te pedimos tu correo solo para crear tu cuenta y guardar tus datos en CapitalNido de forma segura, así puedes verlos desde cualquier dispositivo. No lo usamos para nada más. Tu sesión se mantiene iniciada en este dispositivo hasta que pulses «Cerrar sesión»; solo te lo volveremos a pedir si la sesión caduca o cierras sesión.": ["Ti chiediamo l'email solo per creare il tuo account e salvare i tuoi dati su CapitalNido in modo sicuro, così puoi vederlo da qualsiasi dispositivo. Non la usiamo per nient'altro. La sessione resta attiva su questo dispositivo finché non premi «Esci»; te la richiederemo solo se la sessione scade o se esci.", "We only ask for your email to create your account and keep your data in CapitalNido safe, so you can see it from any device. We don't use it for anything else. You stay signed in on this device until you press «Sign out»; we'll only ask again if your session expires or you sign out."],
     "Crear cuenta": ["Crea account", "Create account"],
     "¿Olvidaste tu contraseña?": ["Password dimenticata?", "Forgot your password?"],
     "Guardar nueva contraseña": ["Salva nuova password", "Save new password"],
@@ -321,7 +321,7 @@
         el.__trA[a] = t;
       });
     });
-    document.title = tr("Libro de Ahorro");
+    document.title = tr("CapitalNido");
     document.documentElement.lang = lang;
   }
 

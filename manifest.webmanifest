@@ -1,6 +1,6 @@
 {
-  "name": "Libro de Ahorro",
-  "short_name": "Ahorro",
+  "name": "CapitalNido",
+  "short_name": "CapitalNido",
   "description": "Seguimiento de ahorro mensual: reparto entre inversión y fondo de emergencia.",
   "lang": "es",
   "start_url": "./",

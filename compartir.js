@@ -2,9 +2,9 @@
   var bar = document.querySelector(".lang-bar");
   if (!bar) return;
   var MSG = {
-    es: { title: "Libro de Ahorro", text: "Te recomiendo el Libro de Ahorro para organizar lo que ahorras cada mes:" },
-    it: { title: "Libro dei Risparmi", text: "Ti consiglio il Libro dei Risparmi per organizzare quanto risparmi ogni mese:" },
-    en: { title: "Savings Book", text: "Check out Savings Book to organise how much you save each month:" }
+    es: { title: "CapitalNido", text: "Te recomiendo CapitalNido para organizar lo que ahorras cada mes:" },
+    it: { title: "CapitalNido", text: "Ti consiglio CapitalNido per organizzare quanto risparmi ogni mese:" },
+    en: { title: "CapitalNido", text: "Check out CapitalNido to organise how much you save each month:" }
   };
   var wrap = document.createElement("div");
   wrap.className = "share-wrap";

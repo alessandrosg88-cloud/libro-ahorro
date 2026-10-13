@@ -1558,7 +1558,7 @@
     var aportado = catsConInversion().reduce(function(a, c){ return a + investHolding(c); }, 0), valor = totalValorInv();
     var hoy = new Date();
     document.getElementById("informe").innerHTML =
-      '<h1>Libro de Ahorro · Informe ' + ano + '</h1>' +
+      '<h1>CapitalNido · Informe ' + ano + '</h1>' +
       '<p class="inf-sub">Creado el ' + hoy.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) + '</p>' +
       '<div class="inf-kpis">' +
         '<div><span>Ahorrado en ' + ano + '</span><b>' + fmtEur(tInv + tFon) + '</b></div>' +
@@ -1580,7 +1580,7 @@
         '<tr><td><b>Total</b></td><td class="n"><b>' + fmtEur((state.saldoCuenta || 0) + valor + emergFundTotal()) + '</b></td></tr>' +
       '</tbody></table>' +
       '<h2>Metas de ahorro</h2>' + metasHtml +
-      '<p class="inf-foot">Informe generado con Libro de Ahorro a partir de los datos que has registrado.</p>';
+      '<p class="inf-foot">Informe generado con CapitalNido a partir de los datos que has registrado.</p>';
   }
   document.getElementById("informeBtn").addEventListener("click", function(){
     var sel = document.getElementById("informeAno");
