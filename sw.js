@@ -1,7 +1,7 @@
 // Service worker del CapitalNido: permite instalar la app y abrirla sin conexión.
 // Solo guarda en caché los archivos de la propia web; los datos de tu cuenta
 // (Firebase) nunca se guardan aquí, siempre van directos por internet.
-var CACHE = "libro-ahorro-v9";
+var CACHE = "libro-ahorro-v10";
 var ARCHIVOS = [
   "./",
   "index.html",

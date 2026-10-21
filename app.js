@@ -38,8 +38,10 @@
     if (sel && sel.value !== (state.moneda || "EUR")) sel.value = state.moneda || "EUR";
   }
   function fmtEur(n){
-    n = Math.round(n);
-    return n.toLocaleString("es-ES") + " " + curSym();
+    // Muestra la cantidad exacta (hasta céntimos), sin redondear a euros enteros.
+    n = Math.round((Number(n) || 0) * 100) / 100;
+    var dec = Number.isInteger(n) ? 0 : 2;
+    return n.toLocaleString("es-ES", { minimumFractionDigits: dec, maximumFractionDigits: 2 }) + " " + curSym();
   }
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 
@@ -467,7 +469,7 @@
     document.getElementById("emergTargetLabel").textContent = fmtEur(fondo);
     var aportado = catsConInversion().reduce(function(a, c){ return a + investHolding(c); }, 0);
     var g = inv - aportado, gEl = document.getElementById("moneyInvGain");
-    gEl.textContent = Math.round(g) === 0 ? "" : fmtGain(g, aportado);
+    gEl.textContent = Math.round(g * 100) === 0 ? "" : fmtGain(g, aportado);
     gEl.className = "gain " + (g > 0 ? "up" : "down");
     var rt = document.getElementById("rentaTotal");
     if (!catsConInversion().length || aportado <= 0){
@@ -493,7 +495,7 @@
         return '<div class="val-row">' +
           '<span class="dot" style="background:' + categoryColor(c) + '"></span>' +
           '<span class="name">' + escapeHtml(c) + ' <span class="aport">· aportado ' + fmtEur(ap) + '</span>' +
-          (Math.round(d) !== 0 ? ' <span class="gain ' + (d > 0 ? "up" : "down") + '">' + fmtGain(d, ap) + '</span>' : '') + '</span>' +
+          (Math.round(d * 100) !== 0 ? ' <span class="gain ' + (d > 0 ? "up" : "down") + '">' + fmtGain(d, ap) + '</span>' : '') + '</span>' +
           '<span class="val-input"><span class="cur">' + curSym() + '</span> <input type="number" min="0" step="0.01" data-valor-cat="' + escapeHtml(c) + '" value="' + (Math.round(val * 100) / 100) + '"></span>' +
         '</div>';
       }).join("");
