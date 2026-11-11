@@ -559,7 +559,7 @@ body.auth-out header.top { display: none; }
     <div class="goal-row">
       <div>
         <div class="hero-title">Objetivo de ahorro mensual</div>
-        <div class="total-edit"><span class="eur">€</span><input type="number" id="goalInput" min="0" step="10" placeholder="0"></div>
+        <div class="total-edit"><span class="eur">€</span><input type="number" id="goalInput" min="0" step="any" placeholder="0"></div>
       </div>
       <div class="goal-status" id="goalStatus"></div>
     </div>
@@ -572,7 +572,7 @@ body.auth-out header.top { display: none; }
       <div>
         <div class="hero-title">Objetivo de ahorro mensual</div>
         <div class="total-edit">
-          <span class="eur">€</span><input type="number" id="totalInput" min="0" step="10" value="0">
+          <span class="eur">€</span><input type="number" id="totalInput" min="0" step="any" value="0">
         </div>
         <div class="total-sub">Escribe cuánto quieres ahorrar este mes y ajusta el reparto abajo</div>
       </div>
@@ -605,7 +605,7 @@ body.auth-out header.top { display: none; }
       <form class="add-row" id="planForm">
         <select id="planTipo" title="¿Inversión o fondo?"><option value="invest">Inversión</option><option value="fondo">Fondo</option></select>
         <select id="planCat" title="Categoría"></select>
-        <input type="number" id="planAmt" placeholder="€/mes" min="1" step="1" required>
+        <input type="number" id="planAmt" placeholder="€/mes" min="1" step="any" required>
         <button type="submit">Añadir al plan</button>
       </form>
       <div class="plan-apply">
@@ -627,7 +627,7 @@ body.auth-out header.top { display: none; }
         <form class="add-row" id="fijaForm">
           <input type="text" id="fijaNombre" placeholder="Nómina" list="fijaSugerencias">
           <datalist id="fijaSugerencias"><option value="Nómina"><option value="Alquiler cobrado"><option value="Pensión"></datalist>
-          <input type="number" id="fijaAmt" placeholder="€/mes" min="0" step="0.01" required>
+          <input type="number" id="fijaAmt" placeholder="€/mes" min="0" step="any" required>
           <button type="submit">Añadir</button>
         </form>
       </div>
@@ -636,7 +636,7 @@ body.auth-out header.top { display: none; }
         <div class="entries-list" id="interesesList"></div>
         <form class="add-row" id="interesForm">
           <select id="interesOrigen" title="¿De dónde vienen?"></select>
-          <input type="number" id="interesAmt" placeholder="€" min="0" step="0.01" required>
+          <input type="number" id="interesAmt" placeholder="€" min="0" step="any" required>
           <input type="text" id="interesNote" placeholder="nota (opcional)">
           <button type="submit">Añadir</button>
         </form>
@@ -656,7 +656,7 @@ body.auth-out header.top { display: none; }
         <h3>Saldo en la cuenta</h3>
         <div class="val-row">
           <span class="name">Dinero en tu cuenta ahora</span>
-          <span class="val-input"><span class="cur">€</span> <input type="number" id="saldoInput" min="0" step="0.01" placeholder="0"></span>
+          <span class="val-input"><span class="cur">€</span> <input type="number" id="saldoInput" min="0" step="any" placeholder="0"></span>
         </div>
         <p class="money-hint">Escribe cuánto tienes ahora en el banco.</p>
       </div>
@@ -688,7 +688,7 @@ body.auth-out header.top { display: none; }
       <form class="add-row" id="investForm">
         <select id="investOrigen" class="origen-sel" title="¿De dónde sale el dinero?"></select>
         <select id="investCat"></select>
-        <input type="number" id="investAmt" placeholder="€" min="0" step="1" required>
+        <input type="number" id="investAmt" placeholder="€" min="0" step="any" required>
         <input type="text" id="investNote" placeholder="nota (opcional)">
         <button type="submit">Añadir</button>
       </form>
@@ -706,7 +706,7 @@ body.auth-out header.top { display: none; }
           <button type="button" class="ghost-btn out-toggle" id="sellToggle">− Registrar una venta</button>
           <form class="add-row out-row" id="sellForm" hidden>
             <select id="sellCat"></select>
-            <input type="number" id="sellAmt" placeholder="€ vendidos" min="0" step="0.01" required>
+            <input type="number" id="sellAmt" placeholder="€ vendidos" min="0" step="any" required>
             <input type="text" id="sellNote" placeholder="nota (opcional)">
             <button type="submit">Vender</button>
           </form>
@@ -806,9 +806,9 @@ body.auth-out header.top { display: none; }
         <span class="card-target num" id="simHeadLabel"></span>
       </div>
       <div class="sim-inputs">
-        <label class="sim-field"><span>Empiezas con</span><span class="val-input"><span class="cur">€</span> <input type="number" id="simInicial" min="0" step="100"></span></label>
-        <label class="sim-field"><span>Inviertes al mes</span><span class="val-input"><span class="cur">€</span> <input type="number" id="simAporte" min="0" step="10"></span></label>
-        <label class="sim-field"><span>Rentabilidad al año</span><span class="val-input"><input type="number" id="simRent" min="0" max="30" step="0.5"> %</span></label>
+        <label class="sim-field"><span>Empiezas con</span><span class="val-input"><span class="cur">€</span> <input type="number" id="simInicial" min="0" step="any"></span></label>
+        <label class="sim-field"><span>Inviertes al mes</span><span class="val-input"><span class="cur">€</span> <input type="number" id="simAporte" min="0" step="any"></span></label>
+        <label class="sim-field"><span>Rentabilidad al año</span><span class="val-input"><input type="number" id="simRent" min="0" max="30" step="any"> %</span></label>
         <label class="sim-field"><span>Durante</span><span class="val-input"><input type="number" id="simAnos" min="1" max="60" step="1"> años</span></label>
       </div>
       <div class="sim-result">
