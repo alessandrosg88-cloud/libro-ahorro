@@ -741,7 +741,7 @@ body.auth-out header.top { display: none; }
       <form class="add-row emerg" id="emergForm">
         <select id="emergOrigen" class="origen-sel" title="¿De dónde sale el dinero?"></select>
         <select id="emergCat" title="¿En qué lo gastarás?"></select>
-        <input type="number" id="emergAmt" placeholder="€" min="0" step="1" required style="width:110px">
+        <input type="number" id="emergAmt" placeholder="€" min="0" step="any" required style="width:110px">
         <input type="text" id="emergNote" placeholder="nota (opcional)">
         <button type="submit">Añadir</button>
       </form>
@@ -757,7 +757,7 @@ body.auth-out header.top { display: none; }
         <h3 class="metas-title">Meses de emergencia cubiertos</h3>
         <div class="cob-row">
           <label for="gastosInput">Tus gastos al mes</label>
-          <span class="val-input"><span class="cur">€</span> <input type="number" id="gastosInput" min="0" step="10" placeholder="0"></span>
+          <span class="val-input"><span class="cur">€</span> <input type="number" id="gastosInput" min="0" step="any" placeholder="0"></span>
           <label for="mesesMetaInput">Meta</label>
           <span class="val-input"><input type="number" id="mesesMetaInput" min="1" max="24" step="1" value="6"> meses</span>
         </div>
@@ -769,7 +769,7 @@ body.auth-out header.top { display: none; }
         <div id="metasList"></div>
         <form class="add-row meta-form" id="metaForm">
           <select id="metaCat" title="¿Para qué ahorras?"></select>
-          <input type="number" id="metaAmt" placeholder="€ meta" min="1" step="1" required>
+          <input type="number" id="metaAmt" placeholder="€ meta" min="1" step="any" required>
           <input type="month" id="metaFecha" title="¿Para cuándo?">
           <button type="submit">Guardar meta</button>
         </form>
@@ -782,7 +782,7 @@ body.auth-out header.top { display: none; }
           <button type="button" class="ghost-btn out-toggle" id="withdrawToggle">− Sacar dinero del fondo</button>
           <form class="add-row out-row" id="withdrawForm" hidden>
             <select id="withdrawCat"></select>
-            <input type="number" id="withdrawAmt" placeholder="€" min="0" step="0.01" required>
+            <input type="number" id="withdrawAmt" placeholder="€" min="0" step="any" required>
             <input type="text" id="withdrawNote" placeholder="nota (opcional)">
             <button type="submit">Sacar</button>
           </form>
